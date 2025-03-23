@@ -1,1 +1,51 @@
 lana;gg;sd dsf fgds;12;200
+dima;kopat kortoshky;dimonchik sahsa oleg;44;1200
+oleg;test project;backend dev;30;500
+sasha;new game;level design;25;600
+masha;app creation;frontend coding;20;450
+dima;kopat kortoshky;dimonchik sahsa oleg;44;1200
+igor;marketing plan;advertising;15;700
+arina;website development;ui design;35;900
+mike;crypto analysis;data research;40;800
+elena;business strategy;financial planning;28;1100
+nikita;database optimization;sql tuning;22;750
+sergey;cybersecurity;penetration testing;27;950
+pavel;machine learning;ai modeling;50;1500
+katya;education platform;content writing;18;400
+sasha;new game;level design;25;600
+dmitry;network setup;server maintenance;33;650
+lana;gg;sd dsf fgds;12;200
+dima;kopat kortoshky;dimonchik sahsa oleg;44;1200
+ivan;ios app;swift development;26;850
+mikhail;android app;kotlin coding;29;700
+alexey;data mining;big data analytics;36;1200
+olga;seo optimization;keyword research;21;550
+vadim;robotics;hardware programming;42;1400
+stas;game testing;quality assurance;38;500
+anna;psychology research;data analysis;31;680
+roman;embedded systems;c++ coding;45;1600
+boris;devops;ci/cd automation;20;1100
+olya;ux research;user testing;24;580
+gena;mobile security;reverse engineering;32;1300
+mark;data visualization;tableau reports;30;870
+nikita;database optimization;sql tuning;22;750
+egor;backend scaling;microservices;28;900
+veronika;product design;wireframing;17;450
+maxim;artificial intelligence;neural networks;50;2000
+elvira;blockchain;smart contracts;44;1800
+vlad;technical writing;documentation;19;550
+ilya;ethical hacking;penetration testing;39;1200
+tanya;medical research;data processing;23;770
+danya;cloud computing;aws setup;48;1500
+ksenia;branding strategy;market positioning;26;680
+vasya;industrial automation;plc programming;43;1400
+gosh;social media marketing;advertising;27;620
+polina;3d modeling;animation;35;1000
+sava;game mechanics;physics simulation;38;850
+andrey;system administration;linux servers;34;980
+evgeniy;stock trading;financial forecasting;29;900
+margo;scriptwriting;storyboarding;22;580
+arkady;space exploration;ai research;50;2500
+ilya;embedded development;c firmware;40;1600
+dasha;fashion design;trend analysis;25;770
+kolya;ux/ui redesign;mobile apps;18;490

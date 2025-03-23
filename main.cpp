@@ -6,6 +6,7 @@
 #include <cctype>
 #include <curses.h>
 #include <openssl/sha.h>
+#include <ctime>
 
 // Константы
 const std::string ACCOUNTS_FILE = "accounts.txt";
@@ -22,8 +23,6 @@ const int ROLE_USER = 0;
 const int ACCESS_PENDING = 0;
 const int ACCESS_APPROVED = 1;
 const int ACCESS_BLOCKED = 2;
-const int SCREEN_WIDTH = 80;
-const int SCREEN_HEIGHT = 24;
 
 // Структура для учётной записи
 struct Account {
@@ -158,10 +157,12 @@ bool authenticate(const std::string& login, const std::string& password) {
 }
 
 void registerUser(const std::string& login, const std::string& password, int role, int access) {
+    int height, width;
+    getmaxyx(stdscr, height, width);
     auto accounts = readAccounts();
     for (const auto& acc : accounts) {
         if (acc.login == login) {
-            mvprintw(SCREEN_HEIGHT - 1, 0, MSG_LOGIN_EXISTS.c_str());
+            mvprintw(height - 1, 0, MSG_LOGIN_EXISTS.c_str());
             refresh();
             return;
         }
@@ -174,11 +175,11 @@ void registerUser(const std::string& login, const std::string& password, int rol
     newAcc.access = access;
     accounts.push_back(newAcc);
     writeAccounts(accounts);
-    mvprintw(SCREEN_HEIGHT - 1, 0, MSG_SUCCESS.c_str());
+    mvprintw(height - 1, 0, MSG_SUCCESS.c_str());
     refresh();
 }
 
-// Экран ввода строки с pdcurses
+// Экран ввода строки с PDCurses
 std::string inputString(int y, int x, const std::string& prompt, bool mask = false) {
     mvprintw(y, x, prompt.c_str());
     std::string input;
@@ -212,9 +213,9 @@ int inputInt(int y, int x, const std::string& prompt) {
             mvprintw(y + 1, x, "Ошибка: введите целое число!");
             refresh();
             napms(1000);
-            mvprintw(y + 1, x, "                            "); // Очистка сообщения об ошибке
-            mvprintw(y, x + prompt.length(), "          "); // Очистка поля ввода
-            move(y, x + prompt.length()); // Возврат курсора
+            mvprintw(y + 1, x, "                            ");
+            mvprintw(y, x + prompt.length(), "          ");
+            move(y, x + prompt.length());
             refresh();
         }
     }
@@ -229,9 +230,9 @@ double inputDouble(int y, int x, const std::string& prompt) {
             mvprintw(y + 1, x, "Ошибка: введите число!");
             refresh();
             napms(1000);
-            mvprintw(y + 1, x, "                            "); // Очистка сообщения об ошибке
-            mvprintw(y, x + prompt.length(), "          "); // Очистка поля ввода
-            move(y, x + prompt.length()); // Возврат курсора
+            mvprintw(y + 1, x, "                            ");
+            mvprintw(y, x + prompt.length(), "          ");
+            move(y, x + prompt.length());
             refresh();
         }
     }
@@ -239,83 +240,155 @@ double inputDouble(int y, int x, const std::string& prompt) {
 
 // Экран авторизации
 void loginScreen() {
+    int height, width;
+    getmaxyx(stdscr, height, width);
     clear();
     mvprintw(0, 0, "=== Авторизация ===");
     std::string login = inputString(2, 0, "Логин: ");
     std::string password = inputString(4, 0, "Пароль: ", true);
     if (authenticate(login, password)) {
-        mvprintw(6, 0, "Вход выполнен успешно!");
-        refresh();
-        napms(1000); // Задержка 1 секунда, чтобы пользователь увидел сообщение
+        mvprintw(height - 2, 0, "Вход выполнен успешно!");
     } else {
-        mvprintw(6, 0, "Неверный логин или пароль!");
-        refresh();
-        napms(1000); // Задержка перед возвратом
+        mvprintw(height - 2, 0, "Неверный логин или пароль!");
     }
+    mvprintw(height - 1, 0, "Нажмите любую клавишу...");
+    refresh();
+    getch();
 }
 
 // Экран регистрации
 void registerScreen(bool byAdmin = false) {
+    int height, width;
+    getmaxyx(stdscr, height, width);
     clear();
     mvprintw(0, 0, "=== Регистрация ===");
     std::string login = inputString(2, 0, "Логин: ");
     std::string password = inputString(4, 0, "Пароль: ", true);
     int role = byAdmin ? ROLE_USER : ROLE_USER;
-    int access = byAdmin ? ACCESS_APPROVED : ACCESS_APPROVED; // Изменено с ACCESS_PENDING на ACCESS_APPROVED
+    int access = byAdmin ? ACCESS_APPROVED : ACCESS_APPROVED;
     registerUser(login, password, role, access);
-    napms(1000);
-}
-
-// Экран просмотра проектов
-void viewProjectsScreen() {
-    clear();
-    mvprintw(0, 0, "=== Просмотр проектов ===");
-    auto projects = readProjects();
-    int y = 2;
-    for (size_t i = 0; i < projects.size() && y < SCREEN_HEIGHT - 1; ++i) {
-        std::string line = std::to_string(i + 1) + ". " + projects[i].name + " - " + projects[i].work_type;
-        mvprintw(y++, 0, line.c_str());
-    }
-    mvprintw(SCREEN_HEIGHT - 1, 0, "Нажмите любую клавишу для возврата...");
+    mvprintw(height - 1, 0, "Нажмите любую клавишу...");
     refresh();
     getch();
 }
 
+// Экран просмотра проектов
+void viewProjectsScreen() {
+    auto projects = readProjects();
+    int height, width;
+    getmaxyx(stdscr, height, width);
+
+    if (projects.empty()) {
+        clear();
+        mvprintw(0, 0, "=== Просмотр проектов ===");
+        mvprintw(2, 0, "Проекты отсутствуют!");
+        mvprintw(height - 1, 0, "Нажмите любую клавишу для возврата...");
+        refresh();
+        getch();
+        return;
+    }
+
+    int dataRows = height - 4;
+    int totalPages = (projects.size() + dataRows - 1) / dataRows;
+    int currentPage = 0;
+
+    while (true) {
+        clear();
+        mvprintw(0, 0, "=== Просмотр проектов ===");
+
+        int startIdx = currentPage * dataRows;
+        int endIdx = std::min(startIdx + dataRows, static_cast<int>(projects.size()));
+
+        // Динамическая ширина столбцов
+        int colNumWidth = 4; // "№" + пробелы
+        int colHoursWidth = 6; // "Часы" + пробелы
+        int colCostWidth = 10; // "Стоимость" + пробелы
+        int remainingWidth = width - colNumWidth - colHoursWidth - colCostWidth - 3; // 3 разделителя "|"
+        int colNameWidth = remainingWidth / 3;
+        int colWorkWidth = colNameWidth;
+        int colEmployeeWidth = remainingWidth - colNameWidth - colWorkWidth;
+
+        // Заголовок таблицы с выравниванием
+        std::string header = std::string(colNumWidth - 1, ' ') + "№ |" +
+                            std::string("Название").substr(0, colNameWidth - 1) + std::string(colNameWidth - 8, ' ') + "|" +
+                            std::string("Работа").substr(0, colWorkWidth - 1) + std::string(colWorkWidth - 7, ' ') + "|" +
+                            std::string("Сотрудник").substr(0, colEmployeeWidth - 1) + std::string(colEmployeeWidth - 10, ' ') + "|" +
+                            "Часы |" +
+                            "Стоимость";
+        mvprintw(2, 0, header.substr(0, width).c_str());
+
+        std::string separator(width, '-');
+        mvprintw(3, 0, separator.c_str());
+
+        // Вывод данных
+        int y = 4;
+        for (int i = startIdx; i < endIdx && y < height - 2; ++i) {
+            std::string num = std::to_string(i + 1) + std::string(colNumWidth - std::to_string(i + 1).length() - 1, ' ') + "|";
+            std::string name = projects[i].name.substr(0, colNameWidth - 1) + std::string(colNameWidth - projects[i].name.length(), ' ') + "|";
+            std::string work = projects[i].work_type.substr(0, colWorkWidth - 1) + std::string(colWorkWidth - projects[i].work_type.length(), ' ') + "|";
+            std::string employee = projects[i].employee.substr(0, colEmployeeWidth - 1) + std::string(colEmployeeWidth - projects[i].employee.length(), ' ') + "|";
+            std::string hours = std::to_string(projects[i].hours) + std::string(colHoursWidth - std::to_string(projects[i].hours).length() - 1, ' ') + "|";
+            std::string cost = std::to_string(projects[i].hour_cost).substr(0, colCostWidth - 1);
+
+            std::string line = num + name + work + employee + hours + cost;
+            mvprintw(y++, 0, line.substr(0, width).c_str());
+        }
+
+        std::string navigation = "Стрелки влево/вправо - переключение страниц | q - выход | Страница " +
+                                 std::to_string(currentPage + 1) + " из " + std::to_string(totalPages);
+        mvprintw(height - 1, 0, navigation.substr(0, width).c_str());
+        refresh();
+
+        int ch = getch();
+        if (ch == KEY_RIGHT && currentPage < totalPages - 1) {
+            currentPage++;
+        } else if (ch == KEY_LEFT && currentPage > 0) {
+            currentPage--;
+        } else if (ch == 'q' || ch == 'Q') {
+            break;
+        }
+    }
+}
+
 // Экран добавления проекта
 void addProjectScreen() {
+    int height, width;
+    getmaxyx(stdscr, height, width);
     clear();
     mvprintw(0, 0, "=== Добавление проекта ===");
     Project proj;
     proj.name = inputString(2, 0, "Наименование проекта: ");
     proj.work_type = inputString(4, 0, "Вид работ: ");
     proj.employee = inputString(6, 0, "Ф.И.О. сотрудника: ");
-    proj.hours = inputInt(8, 0, "Часы: "); // Используем inputInt
-    proj.hour_cost = inputDouble(10, 0, "Стоимость часа: "); // Используем inputDouble
+    proj.hours = inputInt(8, 0, "Часы: ");
+    proj.hour_cost = inputDouble(10, 0, "Стоимость часа: ");
     auto projects = readProjects();
     projects.push_back(proj);
     writeProjects(projects);
-    mvprintw(SCREEN_HEIGHT - 1, 0, MSG_SUCCESS.c_str());
+    mvprintw(height - 1, 0, MSG_SUCCESS.c_str());
     refresh();
     napms(1000);
 }
 
 // Экран редактирования проекта
 void editProjectScreen() {
+    int height, width;
+    getmaxyx(stdscr, height, width);
     clear();
     mvprintw(0, 0, "=== Редактирование проекта ===");
-    int index = std::stoi(inputString(2, 0, "Введите номер проекта: ")) - 1;
+    int index = inputInt(2, 0, "Введите номер проекта: ") - 1;
     auto projects = readProjects();
     if (index >= 0 && index < projects.size()) {
         Project& proj = projects[index];
         proj.name = inputString(4, 0, "Новое наименование проекта: ");
         proj.work_type = inputString(6, 0, "Новый вид работ: ");
         proj.employee = inputString(8, 0, "Новое Ф.И.О. сотрудника: ");
-        proj.hours = std::stoi(inputString(10, 0, "Новые часы: "));
-        proj.hour_cost = std::stod(inputString(12, 0, "Новая стоимость часа: "));
+        proj.hours = inputInt(10, 0, "Новые часы: ");
+        proj.hour_cost = inputDouble(12, 0, "Новая стоимость часа: ");
         writeProjects(projects);
-        mvprintw(SCREEN_HEIGHT - 1, 0, MSG_SUCCESS.c_str());
+        mvprintw(height - 1, 0, MSG_SUCCESS.c_str());
     } else {
-        mvprintw(SCREEN_HEIGHT - 1, 0, MSG_NOT_FOUND.c_str());
+        mvprintw(height - 1, 0, MSG_NOT_FOUND.c_str());
     }
     refresh();
     napms(1000);
@@ -323,9 +396,11 @@ void editProjectScreen() {
 
 // Экран удаления проекта
 void deleteProjectScreen() {
+    int height, width;
+    getmaxyx(stdscr, height, width);
     clear();
-    mvprintw(0, 0, "=== Удаление проекта =='");
-    int index = std::stoi(inputString(2, 0, "Введите номер проекта: ")) - 1;
+    mvprintw(0, 0, "=== Удаление проекта ===");
+    int index = inputInt(2, 0, "Введите номер проекта: ") - 1;
     auto projects = readProjects();
     if (index >= 0 && index < projects.size()) {
         mvprintw(4, 0, MSG_CONFIRM_DELETE.c_str());
@@ -333,36 +408,40 @@ void deleteProjectScreen() {
         if (getch() == 'y') {
             projects.erase(projects.begin() + index);
             writeProjects(projects);
-            mvprintw(SCREEN_HEIGHT - 1, 0, MSG_SUCCESS.c_str());
+            mvprintw(height - 1, 0, MSG_SUCCESS.c_str());
         }
     } else {
-        mvprintw(SCREEN_HEIGHT - 1, 0, MSG_NOT_FOUND.c_str());
+        mvprintw(height - 1, 0, MSG_NOT_FOUND.c_str());
     }
     refresh();
     napms(1000);
 }
 
-// Экран поиска проектов (пример по имени)
+// Экран поиска проектов
 void searchProjectsScreen() {
+    int height, width;
+    getmaxyx(stdscr, height, width);
     clear();
     mvprintw(0, 0, "=== Поиск проектов ===");
     std::string query = inputString(2, 0, "Введите наименование проекта: ");
     auto projects = readProjects();
     int y = 4;
-    for (size_t i = 0; i < projects.size() && y < SCREEN_HEIGHT - 1; ++i) {
+    for (size_t i = 0; i < projects.size() && y < height - 1; ++i) {
         if (projects[i].name.find(query) != std::string::npos) {
             std::string line = std::to_string(i + 1) + ". " + projects[i].name + " - " + projects[i].work_type;
-            mvprintw(y++, 0, line.c_str());
+            mvprintw(y++, 0, line.substr(0, width).c_str());
         }
     }
-    if (y == 4) mvprintw(SCREEN_HEIGHT - 1, 0, MSG_NOT_FOUND.c_str());
-    else mvprintw(SCREEN_HEIGHT - 1, 0, "Нажмите любую клавишу для возврата...");
+    if (y == 4) mvprintw(height - 1, 0, MSG_NOT_FOUND.c_str());
+    else mvprintw(height - 1, 0, "Нажмите любую клавишу для возврата...");
     refresh();
     getch();
 }
 
-// Экран сортировки проектов (пример по имени)
+// Экран сортировки проектов
 void sortProjectsScreen() {
+    int height, width;
+    getmaxyx(stdscr, height, width);
     clear();
     mvprintw(0, 0, "=== Сортировка проектов ===");
     auto projects = readProjects();
@@ -370,31 +449,33 @@ void sortProjectsScreen() {
         return a.name < b.name;
     });
     int y = 2;
-    for (size_t i = 0; i < projects.size() && y < SCREEN_HEIGHT - 1; ++i) {
+    for (size_t i = 0; i < projects.size() && y < height - 1; ++i) {
         std::string line = std::to_string(i + 1) + ". " + projects[i].name + " - " + projects[i].work_type;
-        mvprintw(y++, 0, line.c_str());
+        mvprintw(y++, 0, line.substr(0, width).c_str());
     }
-    mvprintw(SCREEN_HEIGHT - 1, 0, "Нажмите любую клавишу для возврата...");
+    mvprintw(height - 1, 0, "Нажмите любую клавишу для возврата...");
     refresh();
     getch();
 }
 
 // Экран управления учётными записями
 void manageAccountsScreen() {
+    int height, width;
+    getmaxyx(stdscr, height, width);
     clear();
     mvprintw(0, 0, "=== Управление учётными записями ===");
     auto accounts = readAccounts();
     int y = 2;
-    for (size_t i = 0; i < accounts.size() && y < SCREEN_HEIGHT - 3; ++i) {
+    for (size_t i = 0; i < accounts.size() && y < height - 3; ++i) {
         std::string line = std::to_string(i + 1) + ". " + accounts[i].login + " (Role: " +
                           std::to_string(accounts[i].role) + ", Access: " + std::to_string(accounts[i].access) + ")";
-        mvprintw(y++, 0, line.c_str());
+        mvprintw(y++, 0, line.substr(0, width).c_str());
     }
     mvprintw(y++, 0, "1. Подтвердить | 2. Заблокировать | 3. Удалить | 0. Назад");
     refresh();
     int choice = getch() - '0';
     if (choice == 0) return;
-    int index = std::stoi(inputString(y + 1, 0, "Введите номер записи: ")) - 1;
+    int index = inputInt(y + 1, 0, "Введите номер записи: ") - 1;
     if (index >= 0 && index < accounts.size() && accounts[index].login != currentUser->login) {
         if (choice == 1) accounts[index].access = ACCESS_APPROVED;
         else if (choice == 2) accounts[index].access = ACCESS_BLOCKED;
@@ -404,32 +485,33 @@ void manageAccountsScreen() {
             if (getch() == 'y') accounts.erase(accounts.begin() + index);
         }
         writeAccounts(accounts);
-        mvprintw(SCREEN_HEIGHT - 1, 0, MSG_SUCCESS.c_str());
+        mvprintw(height - 1, 0, MSG_SUCCESS.c_str());
     } else {
-        mvprintw(SCREEN_HEIGHT - 1, 0, MSG_NOT_FOUND.c_str());
+        mvprintw(height - 1, 0, MSG_NOT_FOUND.c_str());
     }
     refresh();
     napms(1000);
 }
 
-
-
 // Экран главного меню
 void mainMenu() {
     while (true) {
+        int height, width;
+        getmaxyx(stdscr, height, width);
         clear();
         mvprintw(0, 0, "=== Главное меню ===");
-        mvprintw(2, 0, "1. Просмотр данных");
-        mvprintw(3, 0, "2. Поиск данных");
-        mvprintw(4, 0, "3. Сортировка данных");
+        int y = 2;
+        mvprintw(y++, 0, "1. Просмотр данных");
+        mvprintw(y++, 0, "2. Поиск данных");
+        mvprintw(y++, 0, "3. Сортировка данных");
         if (currentUser->role == ROLE_ADMIN) {
-            mvprintw(5, 0, "4. Управление учётными записями");
-            mvprintw(6, 0, "5. Добавить проект");
-            mvprintw(7, 0, "6. Редактировать проект");
-            mvprintw(8, 0, "7. Удалить проект");
-            mvprintw(9, 0, "8. Регистрация пользователя");
+            mvprintw(y++, 0, "4. Управление учётными записями");
+            mvprintw(y++, 0, "5. Добавить проект");
+            mvprintw(y++, 0, "6. Редактировать проект");
+            mvprintw(y++, 0, "7. Удалить проект");
+            mvprintw(y++, 0, "8. Регистрация пользователя");
         }
-        mvprintw(currentUser->role == ROLE_ADMIN ? 10 : 5, 0, "0. Выход");
+        mvprintw(y++, 0, "0. Выход");
         refresh();
 
         int choice = getch() - '0';
@@ -443,7 +525,7 @@ void mainMenu() {
             case 6: if (currentUser->role == ROLE_ADMIN) editProjectScreen(); break;
             case 7: if (currentUser->role == ROLE_ADMIN) deleteProjectScreen(); break;
             case 8: if (currentUser->role == ROLE_ADMIN) registerScreen(true); break;
-            default: mvprintw(SCREEN_HEIGHT - 1, 0, MSG_INVALID_INPUT.c_str()); refresh(); napms(1000);
+            default: mvprintw(height - 1, 0, MSG_INVALID_INPUT.c_str()); refresh(); napms(1000);
         }
     }
 }
@@ -460,14 +542,17 @@ int main() {
         std::ofstream(PROJECTS_FILE).close();
     }
 
-    // Инициализация pdcurses
+    // Инициализация PDCurses
     initscr();
     cbreak();
     noecho();
     keypad(stdscr, TRUE);
+    srand(time(nullptr));
 
     // Главный цикл
     while (true) {
+        int height, width;
+        getmaxyx(stdscr, height, width);
         clear();
         mvprintw(0, 0, "1. Вход | 2. Регистрация | 0. Выход");
         refresh();
@@ -483,12 +568,12 @@ int main() {
         } else if (choice == 2) {
             registerScreen();
         } else {
-            mvprintw(2, 0, MSG_INVALID_INPUT.c_str());
+            mvprintw(height - 1, 0, MSG_INVALID_INPUT.c_str());
             refresh();
             napms(1000);
         }
     }
-
+пр
     endwin();
     return 0;
 }
