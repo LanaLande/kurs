@@ -423,21 +423,113 @@ void searchProjectsScreen() {
     getmaxyx(stdscr, height, width);
     clear();
     mvprintw(0, 0, "=== Поиск проектов ===");
-    std::string query = inputString(2, 0, "Введите наименование проекта: ");
+    mvprintw(2, 0, "Выберите критерий поиска:");
+    mvprintw(3, 0, "1. По наименованию проекта");
+    mvprintw(4, 0, "2. По виду работ");
+    mvprintw(5, 0, "3. По Ф.И.О. сотрудника");
+    refresh();
+
+    int choice = getch() - '0';
+    if (choice < 1 || choice > 3) {
+        mvprintw(height - 1, 0, MSG_INVALID_INPUT.c_str());
+        refresh();
+        napms(1000);
+        return;
+    }
+
+    std::string prompt;
+    switch (choice) {
+        case 1: prompt = "Введите наименование проекта: "; break;
+        case 2: prompt = "Введите вид работ: "; break;
+        case 3: prompt = "Введите Ф.И.О. сотрудника: "; break;
+    }
+
+    clear();
+    mvprintw(0, 0, "=== Поиск проектов ===");
+    std::string query = inputString(2, 0, prompt);
     auto projects = readProjects();
-    int y = 4;
-    for (size_t i = 0; i < projects.size() && y < height - 1; ++i) {
-        if (projects[i].name.find(query) != std::string::npos) {
-            std::string line = std::to_string(i + 1) + ". " + projects[i].name + " - " + projects[i].work_type;
-            mvprintw(y++, 0, line.substr(0, width).c_str());
+
+    // Фильтрация проектов
+    std::vector<Project> filteredProjects;
+    for (const auto& proj : projects) {
+        if (choice == 1 && proj.name.find(query) != std::string::npos) {
+            filteredProjects.push_back(proj);
+        } else if (choice == 2 && proj.work_type.find(query) != std::string::npos) {
+            filteredProjects.push_back(proj);
+        } else if (choice == 3 && proj.employee.find(query) != std::string::npos) {
+            filteredProjects.push_back(proj);
         }
     }
-    if (y == 4) mvprintw(height - 1, 0, MSG_NOT_FOUND.c_str());
-    else mvprintw(height - 1, 0, "Нажмите любую клавишу для возврата...");
-    refresh();
-    getch();
-}
 
+    if (filteredProjects.empty()) {
+        mvprintw(4, 0, MSG_NOT_FOUND.c_str());
+        mvprintw(height - 1, 0, "Нажмите любую клавишу для возврата...");
+        refresh();
+        getch();
+        return;
+    }
+
+    int dataRows = height - 4;
+    int totalPages = (filteredProjects.size() + dataRows - 1) / dataRows;
+    int currentPage = 0;
+
+    while (true) {
+        clear();
+        mvprintw(0, 0, "=== Поиск проектов ===");
+
+        int startIdx = currentPage * dataRows;
+        int endIdx = std::min(startIdx + dataRows, static_cast<int>(filteredProjects.size()));
+
+        // Динамическая ширина столбцов
+        int colNumWidth = 4;
+        int colHoursWidth = 6;
+        int colCostWidth = 10;
+        int remainingWidth = width - colNumWidth - colHoursWidth - colCostWidth - 3;
+        int colNameWidth = remainingWidth / 3;
+        int colWorkWidth = colNameWidth;
+        int colEmployeeWidth = remainingWidth - colNameWidth - colWorkWidth;
+
+        // Заголовок таблицы
+        std::string header = std::string(colNumWidth - 1, ' ') + "№ |" +
+                            std::string("Название").substr(0, colNameWidth - 1) + std::string(colNameWidth - 8, ' ') + "|" +
+                            std::string("Работа").substr(0, colWorkWidth - 1) + std::string(colWorkWidth - 7, ' ') + "|" +
+                            std::string("Сотрудник").substr(0, colEmployeeWidth - 1) + std::string(colEmployeeWidth - 10, ' ') + "|" +
+                            "Часы |" +
+                            "Стоимость";
+        mvprintw(2, 0, header.substr(0, width).c_str());
+
+        std::string separator(width, '-');
+        mvprintw(3, 0, separator.c_str());
+
+        // Вывод данных
+        int y = 4;
+        for (int i = startIdx; i < endIdx && y < height - 2; ++i) {
+            std::string num = std::to_string(i + 1) + std::string(colNumWidth - std::to_string(i + 1).length() - 1, ' ') + "|";
+            std::string name = filteredProjects[i].name.substr(0, colNameWidth - 1) + std::string(colNameWidth - filteredProjects[i].name.length(), ' ') + "|";
+            std::string work = filteredProjects[i].work_type.substr(0, colWorkWidth - 1) + std::string(colWorkWidth - filteredProjects[i].work_type.length(), ' ') + "|";
+            std::string employee = filteredProjects[i].employee.substr(0, colEmployeeWidth - 1) + std::string(colEmployeeWidth - filteredProjects[i].employee.length(), ' ') + "|";
+            std::string hours = std::to_string(filteredProjects[i].hours) + std::string(colHoursWidth - std::to_string(filteredProjects[i].hours).length() - 1, ' ') + "|";
+            std::string cost = std::to_string(filteredProjects[i].hour_cost).substr(0, colCostWidth - 1);
+
+            std::string line = num + name + work + employee + hours + cost;
+            mvprintw(y++, 0, line.substr(0, width).c_str());
+        }
+
+        std::string navigation = "Стрелки влево/вправо - переключение страниц | q - выход | Страница " +
+                                 std::to_string(currentPage + 1) + " из " + std::to_string(totalPages);
+        mvprintw(height - 1, 0, navigation.substr(0, width).c_str());
+        refresh();
+
+        int ch = getch();
+        if (ch == KEY_RIGHT && currentPage < totalPages - 1) {
+            currentPage++;
+        } else if (ch == KEY_LEFT && currentPage > 0) {
+            currentPage--;
+        } else if (ch == 'q' || ch == 'Q') {
+            break;
+        }
+    }
+}
 // Экран сортировки проектов
 void sortProjectsScreen() {
     int height, width;
@@ -573,7 +665,6 @@ int main() {
             napms(1000);
         }
     }
-пр
     endwin();
     return 0;
 }
