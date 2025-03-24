@@ -246,29 +246,10 @@ void loginScreen() {
     mvprintw(0, 0, "=== Авторизация ===");
     std::string login = inputString(2, 0, "Логин: ");
     std::string password = inputString(4, 0, "Пароль: ", true);
-   auto accounts = readAccounts();
-    bool found = false;
-    for (auto& acc : accounts) {
-        if (acc.login == login) {
-            found = true;
-            std::string hashed = hashPassword(password, acc.salt);
-            if (hashed == acc.salted_hash_password) {
-                if (acc.access == ACCESS_APPROVED) {
-                    currentUser = new Account(acc);
-                    mvprintw(height - 2, 0, "Вход выполнен успешно!");
-                } else if (acc.access == ACCESS_PENDING) {
-                    mvprintw(height - 2, 0, "Ваш запрос на регистрацию ожидает подтверждения.");
-                } else if (acc.access == ACCESS_BLOCKED) {
-                    mvprintw(height - 2, 0, "Ваш аккаунт заблокирован.");
-                }
-            } else {
-                mvprintw(height - 2, 0, "Неверный пароль!");
-            }
-            break;
-        }
-    }
-    if (!found) {
-        mvprintw(height - 2, 0, "Логин не найден!");
+    if (authenticate(login, password)) {
+        mvprintw(height - 2, 0, "Вход выполнен успешно!");
+    } else {
+        mvprintw(height - 2, 0, "Неверный логин или пароль!");
     }
     mvprintw(height - 1, 0, "Нажмите любую клавишу...");
     refresh();
@@ -284,12 +265,8 @@ void registerScreen(bool byAdmin = false) {
     std::string login = inputString(2, 0, "Логин: ");
     std::string password = inputString(4, 0, "Пароль: ", true);
     int role = byAdmin ? ROLE_USER : ROLE_USER;
-   int access = byAdmin ? ACCESS_APPROVED : ACCESS_PENDING; // Новый пользователь получает ACCESS_PENDING
+    int access = byAdmin ? ACCESS_APPROVED : ACCESS_APPROVED;
     registerUser(login, password, role, access);
-    
-    if (!byAdmin) {
-        mvprintw(height - 2, 0, "Ваш запрос отправлен администратору на подтверждение.");
-    }
     mvprintw(height - 1, 0, "Нажмите любую клавишу...");
     refresh();
     getch();
@@ -573,72 +550,6 @@ void sortProjectsScreen() {
     getch();
 }
 
-void editAccountScreen(int index) {
-    int height, width;
-    getmaxyx(stdscr, height, width);
-    clear();
-    mvprintw(0, 0, "=== Редактирование учетной записи ===");
-   
-    auto accounts = readAccounts();
-    if (index >= 0 && index < accounts.size() && accounts[index].login != currentUser->login) {
-        Account& acc = accounts[index];
-        
-        // Отображение текущих данных
-        mvprintw(4, 0, "Текущий логин: %s", acc.login.c_str());
-        mvprintw(5, 0, "Текущая роль: %d (0 - Пользователь, 1 - Админ)", acc.role);
-        mvprintw(6, 0, "Текущий статус: %d (0 - Ожидает, 1 - Одобрен, 2 - Заблокирован)", acc.access);
-
-        // Ввод новых данных
-        std::string newLogin = inputString(8, 0, "Новый логин (Enter для сохранения текущего): ");
-        refresh();
-        if (!newLogin.empty()) {
-            // Проверка на уникальность нового логина
-            bool loginExists = false;
-            for (const auto& existingAcc : accounts) {
-                if (existingAcc.login == newLogin && existingAcc.login != acc.login) {
-                    loginExists = true;
-                    break;
-                }
-            }
-            if (loginExists) {
-                mvprintw(height - 1, 0, "Логин уже существует!");
-                refresh();
-                napms(1000);
-                return;
-            }
-            acc.login = newLogin;
-        }
-
-        int newRole = inputInt(10, 0, "Новая роль (0 - Пользователь, 1 - Админ): ");
-        if (newRole == 0 || newRole == 1) {
-            acc.role = newRole;
-        } else {
-            mvprintw(height - 1, 0, "Неверное значение роли!");
-            refresh();
-            napms(1000);
-            return;
-        }
-
-        int newAccess = inputInt(12, 0, "Новый статус (0 - Ожидает, 1 - Одобрен, 2 - Заблокирован): ");
-        if (newAccess >= 0 && newAccess <= 2) {
-            acc.access = newAccess;
-        } else {
-            mvprintw(height - 1, 0, "Неверное значение статуса!");
-            refresh();
-            napms(1000);
-            return;
-        }
-
-        // Сохранение изменений
-        writeAccounts(accounts);
-        mvprintw(height - 1, 0, MSG_SUCCESS.c_str());
-    } else {
-        mvprintw(height - 1, 0, "Запись не найдена или это текущий пользователь!");
-    }
-    refresh();
-    napms(1000);
-}
-
 // Экран управления учётными записями
 void manageAccountsScreen() {
     int height, width;
@@ -652,7 +563,7 @@ void manageAccountsScreen() {
                           std::to_string(accounts[i].role) + ", Access: " + std::to_string(accounts[i].access) + ")";
         mvprintw(y++, 0, line.substr(0, width).c_str());
     }
-    mvprintw(y++, 0, "1. Подтвердить | 2. Заблокировать | 3. Удалить | 4. Редактировать | 0. Назад");
+    mvprintw(y++, 0, "1. Подтвердить | 2. Заблокировать | 3. Удалить | 0. Назад");
     refresh();
     int choice = getch() - '0';
     if (choice == 0) return;
@@ -665,10 +576,6 @@ void manageAccountsScreen() {
             refresh();
             if (getch() == 'y') accounts.erase(accounts.begin() + index);
         }
-        else if (choice == 4) {
-            editAccountScreen(index); 
-            return; 
-        }
         writeAccounts(accounts);
         mvprintw(height - 1, 0, MSG_SUCCESS.c_str());
     } else {
@@ -678,66 +585,6 @@ void manageAccountsScreen() {
     napms(1000);
 }
 
-void pendingRequestsScreen() {
-    int height, width;
-    getmaxyx(stdscr, height, width);
-    clear();
-    mvprintw(0, 0, "=== Запросы на подтверждение ===");
-    auto accounts = readAccounts();
-    
-    // Фильтруем пользователей с ACCESS_PENDING
-    std::vector<Account> pendingAccounts;
-    for (const auto& acc : accounts) {
-        if (acc.access == ACCESS_PENDING) {
-            pendingAccounts.push_back(acc);
-        }
-    }
-
-    if (pendingAccounts.empty()) {
-        mvprintw(2, 0, "Нет запросов на подтверждение!");
-        mvprintw(height - 1, 0, "Нажмите любую клавишу для возврата...");
-        refresh();
-        getch();
-        return;
-    }
-
-    int y = 2;
-    for (size_t i = 0; i < pendingAccounts.size() && y < height - 3; ++i) {
-        std::string line = std::to_string(i + 1) + ". " + pendingAccounts[i].login + " (Ожидает подтверждения)";
-        mvprintw(y++, 0, line.substr(0, width).c_str());
-    }
-    mvprintw(y++, 0, "1. Подтвердить | 2. Заблокировать | 0. Назад");
-    refresh();
-
-    int choice = getch() - '0';
-    if (choice == 0) return;
-
-    int index = inputInt(y + 1, 0, "Введите номер записи: ") - 1;
-    if (index >= 0 && index < pendingAccounts.size()) {
-        // Находим индекс в полном списке аккаунтов
-        int realIndex = -1;
-        for (size_t i = 0; i < accounts.size(); ++i) {
-            if (accounts[i].login == pendingAccounts[index].login) {
-                realIndex = i;
-                break;
-            }
-        }
-        if (realIndex != -1) {
-            if (choice == 1) {
-                accounts[realIndex].access = ACCESS_APPROVED;
-                mvprintw(height - 1, 0, "Пользователь подтверждён!");
-            } else if (choice == 2) {
-                accounts[realIndex].access = ACCESS_BLOCKED;
-                mvprintw(height - 1, 0, "Пользователь заблокирован!");
-            }
-            writeAccounts(accounts);
-        }
-    } else {
-        mvprintw(height - 1, 0, MSG_NOT_FOUND.c_str());
-    }
-    refresh();
-    napms(1000);
-}
 // Экран главного меню
 void mainMenu() {
     while (true) {
@@ -755,7 +602,6 @@ void mainMenu() {
             mvprintw(y++, 0, "6. Редактировать проект");
             mvprintw(y++, 0, "7. Удалить проект");
             mvprintw(y++, 0, "8. Регистрация пользователя");
-            mvprintw(y++, 0, "9. Запросы на подтверждение"); 
         }
         mvprintw(y++, 0, "0. Выход");
         refresh();
@@ -771,7 +617,6 @@ void mainMenu() {
             case 6: if (currentUser->role == ROLE_ADMIN) editProjectScreen(); break;
             case 7: if (currentUser->role == ROLE_ADMIN) deleteProjectScreen(); break;
             case 8: if (currentUser->role == ROLE_ADMIN) registerScreen(true); break;
-            case 9: if (currentUser->role == ROLE_ADMIN) pendingRequestsScreen(); break;
             default: mvprintw(height - 1, 0, MSG_INVALID_INPUT.c_str()); refresh(); napms(1000);
         }
     }

@@ -49,3 +49,4 @@ arkady;space exploration;ai research;50;2500
 ilya;embedded development;c firmware;40;1600
 dasha;fashion design;trend analysis;25;770
 kolya;ux/ui redesign;mobile apps;18;490
+7;trtr;tyf;65;67
