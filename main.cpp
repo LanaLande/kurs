@@ -188,8 +188,8 @@ std::string inputString(int y, int x, const std::string& prompt, bool mask = fal
     std::string input;
     int ch;
     while ((ch = getch()) != '\n') {
-        if (ch == '/') { // Проверка на символ "/"
-            return "/"; // Возвращаем "/" для отмены
+        if (ch == '/') {
+            return "/";
         }
         if (ch == KEY_BACKSPACE || ch == 8) {
             if (!input.empty()) {
@@ -209,7 +209,6 @@ std::string inputString(int y, int x, const std::string& prompt, bool mask = fal
     }
     return input;
 }
-
 
 int inputInt(int y, int x, const std::string& prompt, int maxLength = -1) {
     while (true) {
@@ -252,7 +251,7 @@ void loginScreen() {
     clear();
     mvprintw(0, 0, "=== Авторизация ===");
     
-    std::string login = inputString(2, 0, "Логин: ");
+    std::string login = inputString(2, 0, "Логин: ", false, 20); // Ограничение 20 символов
     if (login == "/") {
         mvprintw(height - 1, 0, "\"Вход отменен!\"");
         refresh();
@@ -260,7 +259,7 @@ void loginScreen() {
         return;
     }
     
-    std::string password = inputString(4, 0, "Пароль: ", true);
+    std::string password = inputString(4, 0, "Пароль: ", true, 20); // Ограничение 20 символов
     auto accounts = readAccounts();
     bool found = false;
     for (auto& acc : accounts) {
@@ -292,7 +291,6 @@ void loginScreen() {
 
 
 
-
 // Экран регистрации
 void registerScreen(bool byAdmin = false) {
     int height, width;
@@ -300,7 +298,7 @@ void registerScreen(bool byAdmin = false) {
     clear();
     mvprintw(0, 0, "=== Регистрация ===");
     
-    std::string login = inputString(2, 0, "Логин: ");
+    std::string login = inputString(2, 0, "Логин: ", false, 20);
     if (login == "/") {
         mvprintw(height - 1, 0, "\"Регистрация отменена!\"");
         refresh();
@@ -308,11 +306,14 @@ void registerScreen(bool byAdmin = false) {
         return;
     }
     
-    std::string password = inputString(4, 0, "Пароль: ", true);
+    std::string password = inputString(4, 0, "Пароль: ", true, 20);
     int role = byAdmin ? ROLE_USER : ROLE_USER;
     int access = byAdmin ? ACCESS_APPROVED : ACCESS_PENDING;
     registerUser(login, password, role, access);
     
+    // Очищаем нижние строки перед выводом
+    mvprintw(height - 2, 0, std::string(width, ' ').c_str()); // Очистка строки
+    mvprintw(height - 1, 0, std::string(width, ' ').c_str()); // Очистка строки
     if (!byAdmin) {
         mvprintw(height - 2, 0, "Ваш запрос отправлен администратору на подтверждение.");
     }
@@ -320,9 +321,6 @@ void registerScreen(bool byAdmin = false) {
     refresh();
     getch();
 }
-
-
-
 
 // Экран просмотра проектов
 void viewProjectsScreen() {
