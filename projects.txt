@@ -1,5 +1,5 @@
 q;q;q;232;324
-dima;kopat kortoshky;dimonchik sahsa oleg;44;1200
+dima;hype;dimonchik sahsa oleg;20;1
 oleg;test project;backend dev;30;500
 sasha;new game;level design;25;600
 masha;app creation;frontend coding;20;450

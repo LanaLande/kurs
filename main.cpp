@@ -185,6 +185,9 @@ std::string inputString(int y, int x, const std::string& prompt, bool mask = fal
     std::string input;
     int ch;
     while ((ch = getch()) != '\n') {
+        if (ch == '/') { // Проверка на символ "/"
+            return "/"; // Возвращаем "/" для отмены
+        }
         if (ch == KEY_BACKSPACE || ch == 8) {
             if (!input.empty()) {
                 input.pop_back();
@@ -452,21 +455,128 @@ void editProjectScreen() {
     mvprintw(0, 0, "=== Редактирование проекта ===");
     int index = inputInt(2, 0, "Введите номер проекта: ") - 1;
     auto projects = readProjects();
+
     if (index >= 0 && index < projects.size()) {
         Project& proj = projects[index];
+        Project originalProj = proj; // Сохраняем копию оригинальных данных для отмены
+
+        // Очищаем строку ввода номера проекта полностью перед выводом новой надписи
+        mvprintw(2, 0, std::string(width, ' ').c_str()); // Заполняем строку пробелами
+        mvprintw(2, 0, "Текущие данные проекта:");       // Записываем новую надпись
+        refresh();
+
+        // Фиксированные ширины столбцов (как в viewProjectsScreen)
+        int colNumWidth = 4;      // "№"
+        int colNameWidth = 15;    // "Название"
+        int colWorkWidth = 15;    // "Работа"
+        int colEmployeeWidth = 33;// "Сотрудник"
+        int colHoursWidth = 6;    // "Часы"
+        int colCostWidth = 10;    // "Стоимость"
+
+        int totalWidth = colNumWidth + colNameWidth + colWorkWidth + colEmployeeWidth + colHoursWidth + colCostWidth + 5; // 5 разделителей "|"
+        if (totalWidth > width) {
+            colEmployeeWidth = width - (colNumWidth + colNameWidth + colWorkWidth + colHoursWidth + colCostWidth + 5);
+        }
+
+        // Заголовок таблицы
+        std::string header = std::string(colNumWidth - 1, ' ') + "№ |" +
+                            "Название" + std::string(colNameWidth - 8, ' ') + "|" +
+                            "Работа" + std::string(colWorkWidth - 6, ' ') + "|" +
+                            "Сотрудник" + std::string(colEmployeeWidth - 9, ' ') + "|" +
+                            "Часы" + std::string(colHoursWidth - 4, ' ') + "|" +
+                            "Стоимость";
+        mvprintw(4, 0, header.substr(0, width).c_str());
+
+        std::string separator(totalWidth, '-');
+        mvprintw(5, 0, separator.c_str());
+
+        // Вывод данных выбранного проекта в виде таблицы
+        std::string num = std::to_string(index + 1) + std::string(colNumWidth - std::to_string(index + 1).length() - 1, ' ') + "|";
+        std::string name = proj.name.substr(0, colNameWidth - 1) + std::string(colNameWidth - std::min(proj.name.length(), static_cast<size_t>(colNameWidth - 1)), ' ') + "|";
+        std::string work = proj.work_type.substr(0, colWorkWidth - 1) + std::string(colWorkWidth - std::min(proj.work_type.length(), static_cast<size_t>(colWorkWidth - 1)), ' ') + "|";
+        std::string employee = proj.employee.substr(0, colEmployeeWidth - 1) + std::string(colEmployeeWidth - std::min(proj.employee.length(), static_cast<size_t>(colEmployeeWidth - 1)), ' ') + "|";
+        std::string hours = std::to_string(proj.hours) + std::string(colHoursWidth - std::to_string(proj.hours).length() - 1, ' ') + "|";
+        std::string cost = std::to_string(proj.hour_cost).substr(0, colCostWidth - 1);
+
+        std::string line = num + name + work + employee + hours + cost;
+        mvprintw(6, 0, line.substr(0, width).c_str());
+
+        // Сообщение перед вводом новых данных
+        mvprintw(8, 0, "Введите новые данные (Enter для сохранения текущего значения, / для отмены):");
 
         // Ограничения длины
         const int MAX_NAME_LENGTH = 14;
         const int MAX_WORK_LENGTH = 14;
         const int MAX_EMPLOYEE_LENGTH = 32;
-        const int MAX_HOURS_LENGTH = 5;   // Новое ограничение для часов
-        const int MAX_COST_LENGTH = 10;   // Новое ограничение для стоимости
+        const int MAX_HOURS_LENGTH = 5;   // Ограничение для часов
+        const int MAX_COST_LENGTH = 10;   // Ограничение для стоимости
 
-        proj.name = inputString(4, 0, "Новое наименование проекта (макс. 14): ", false, MAX_NAME_LENGTH);
-        proj.work_type = inputString(6, 0, "Новый вид работ (макс. 14): ", false, MAX_WORK_LENGTH);
-        proj.employee = inputString(8, 0, "Новое Ф.И.О. сотрудника (макс. 32): ", false, MAX_EMPLOYEE_LENGTH);
-        proj.hours = inputInt(10, 0, "Новые часы (макс. 5): ", MAX_HOURS_LENGTH);
-        proj.hour_cost = inputDouble(12, 0, "Новая стоимость часа (макс. 10): ", MAX_COST_LENGTH);
+        // Редактирование с возможностью отмены по "/"
+        std::string newName = inputString(9, 0, "Новое наименование (макс. 14): ", false, MAX_NAME_LENGTH);
+        if (newName == "/") { // Проверка на "/"
+            proj = originalProj; // Восстанавливаем оригинальные данные
+            mvprintw(height - 1, 0, "Редактирование отменено!");
+            refresh();
+            napms(1000);
+            return;
+        }
+        proj.name = newName.empty() ? proj.name : newName;
+
+        std::string newWork = inputString(10, 0, "Новый вид работ (макс. 14): ", false, MAX_WORK_LENGTH);
+        if (newWork == "/") {
+            proj = originalProj;
+            mvprintw(height - 1, 0, "Редактирование отменено!");
+            refresh();
+            napms(1000);
+            return;
+        }
+        proj.work_type = newWork.empty() ? proj.work_type : newWork;
+
+        std::string newEmployee = inputString(11, 0, "Новое Ф.И.О. сотрудника (макс. 32): ", false, MAX_EMPLOYEE_LENGTH);
+        if (newEmployee == "/") {
+            proj = originalProj;
+            mvprintw(height - 1, 0, "Редактирование отменено!");
+            refresh();
+            napms(1000);
+            return;
+        }
+        proj.employee = newEmployee.empty() ? proj.employee : newEmployee;
+
+        std::string hoursInput = inputString(12, 0, "Новые часы (макс. 5): ", false, MAX_HOURS_LENGTH);
+        if (hoursInput == "/") {
+            proj = originalProj;
+            mvprintw(height - 1, 0, "Редактирование отменено!");
+            refresh();
+            napms(1000);
+            return;
+        }
+        if (!hoursInput.empty()) {
+            try {
+                proj.hours = std::stoi(hoursInput);
+            } catch (const std::exception& e) {
+                mvprintw(height - 1, 0, "Ошибка: часы оставлены без изменений!");
+                refresh();
+                napms(1000);
+            }
+        }
+
+        std::string costInput = inputString(13, 0, "Новая стоимость часа (макс. 10): ", false, MAX_COST_LENGTH);
+        if (costInput == "/") {
+            proj = originalProj;
+            mvprintw(height - 1, 0, "Редактирование отменено!");
+            refresh();
+            napms(1000);
+            return;
+        }
+        if (!costInput.empty()) {
+            try {
+                proj.hour_cost = std::stod(costInput);
+            } catch (const std::exception& e) {
+                mvprintw(height - 1, 0, "Ошибка: стоимость оставлена без изменений!");
+                refresh();
+                napms(1000);
+            }
+        }
 
         writeProjects(projects);
         mvprintw(height - 1, 0, MSG_SUCCESS.c_str());
@@ -476,6 +586,15 @@ void editProjectScreen() {
     refresh();
     napms(1000);
 }
+
+
+
+
+
+
+
+
+
 
 
 // Экран удаления проекта
