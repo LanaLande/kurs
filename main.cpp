@@ -786,7 +786,6 @@ void searchProjectsScreen() {
 
 
 
-
 void editAccountScreen(int index) {
     int height, width;
     getmaxyx(stdscr, height, width);
@@ -796,17 +795,16 @@ void editAccountScreen(int index) {
     auto accounts = readAccounts();
     if (index >= 0 && index < accounts.size() && accounts[index].login != currentUser->login) {
         Account& acc = accounts[index];
-        
-        // Отображение текущих данных
-        mvprintw(4, 0, "Текущий логин: %s", acc.login.c_str());
-        mvprintw(5, 0, "Текущая роль: %d (0 - Пользователь, 1 - Админ)", acc.role);
-        mvprintw(6, 0, "Текущий статус: %d (0 - Ожидает, 1 - Одобрен, 2 - Заблокирован)", acc.access);
 
-        // Ввод новых данных
-        std::string newLogin = inputString(8, 0, "Новый логин (Enter для сохранения текущего): ");
-        refresh();
+        mvprintw(4, 0, "Текущий логин: %s", acc.login.c_str());
+        mvprintw(5, 0, "Админ: %s", acc.role ? "1 - да" : "0 - нет");
+        mvprintw(6, 0, "Заблокирован: %s", 
+                 acc.access == ACCESS_BLOCKED ? "1 - да" : "0 - нет");
+
+        const int MAX_LOGIN_LENGTH = 20;
+        std::string newLogin = inputString(8, 0, "Новый логин (Enter - сохранить текущий): ", false, MAX_LOGIN_LENGTH);
+        if (newLogin == "/") return;
         if (!newLogin.empty()) {
-            // Проверка на уникальность нового логина
             bool loginExists = false;
             for (const auto& existingAcc : accounts) {
                 if (existingAcc.login == newLogin && existingAcc.login != acc.login) {
@@ -823,81 +821,249 @@ void editAccountScreen(int index) {
             acc.login = newLogin;
         }
 
-        int newRole = inputInt(10, 0, "Новая роль (0 - Пользователь, 1 - Админ): ");
-        if (newRole == 0 || newRole == 1) {
-            acc.role = newRole;
-        } else {
-            mvprintw(height - 1, 0, "Неверное значение роли!");
-            refresh();
-            napms(1000);
-            return;
+        std::string newRoleStr = inputString(10, 0, "Админ (0 - нет, 1 - да, Enter - сохранить текущий): ");
+        if (newRoleStr == "/") return;
+        if (!newRoleStr.empty()) {
+            int newRole = std::stoi(newRoleStr);
+            if (newRole == 0 || newRole == 1) {
+                acc.role = newRole;
+            } else {
+                mvprintw(height - 1, 0, "Неверное значение роли!");
+                refresh();
+                napms(1000);
+                return;
+            }
         }
 
-        int newAccess = inputInt(12, 0, "Новый статус (0 - Ожидает, 1 - Одобрен, 2 - Заблокирован): ");
-        if (newAccess >= 0 && newAccess <= 2) {
-            acc.access = newAccess;
-        } else {
-            mvprintw(height - 1, 0, "Неверное значение статуса!");
-            refresh();
-            napms(1000);
-            return;
+        std::string newBlockedStr = inputString(12, 0, "Заблокирован (0 - нет, 1 - да, Enter - сохранить текущий): ");
+        if (newBlockedStr == "/") return;
+        if (!newBlockedStr.empty()) {
+            int newBlocked = std::stoi(newBlockedStr);
+            if (newBlocked == 0 || newBlocked == 1) {
+                // Преобразуем интерфейсные 0 и 1 во внутренние статусы
+                if (newBlocked == 0) {
+                    acc.access = (acc.access == ACCESS_PENDING) ? ACCESS_PENDING : ACCESS_APPROVED;
+                } else {
+                    acc.access = ACCESS_BLOCKED;
+                }
+            } else {
+                mvprintw(height - 1, 0, "Неверное значение! Используйте 0 или 1.");
+                refresh();
+                napms(1000);
+                return;
+            }
         }
 
-        // Сохранение изменений
         writeAccounts(accounts);
         mvprintw(height - 1, 0, MSG_SUCCESS.c_str());
+        refresh();
+        napms(1000);
+    }
+}
+
+
+
+void confirmDeleteAccountScreen(int index, std::vector<Account>& accounts) {
+    int height, width;
+    getmaxyx(stdscr, height, width);
+    clear();
+    mvprintw(0, 0, "=== Подтверждение удаления ===");
+    mvprintw(2, 0, "Информация об учетной записи:");
+
+    int colNumWidth = 4;
+    int colLoginWidth = 20;
+    int colRoleWidth = 12; // Фиксируем ширину для "Админ"
+    int colAccessWidth = 14;
+    int totalWidth = colNumWidth + colLoginWidth + colRoleWidth + colAccessWidth + 3;
+    if (totalWidth > width) {
+        colLoginWidth = width - (colNumWidth + colRoleWidth + colAccessWidth + 3);
+    }
+
+    std::string header = std::string(colNumWidth - 1, ' ') + "№ |" +
+                        "Логин" + std::string(colLoginWidth - 5, ' ') + "|" +
+                        "Админ" + std::string(colRoleWidth - 5, ' ') + "|" +
+                        "Заблокирован";
+    mvprintw(4, 0, header.substr(0, width).c_str());
+
+    std::string separator(totalWidth, '-');
+    mvprintw(5, 0, separator.c_str());
+
+    std::string num = std::to_string(index + 1) + std::string(colNumWidth - std::to_string(index + 1).length() - 1, ' ') + "|";
+    std::string login = accounts[index].login.substr(0, colLoginWidth - 1) + 
+                        std::string(colLoginWidth - std::min(accounts[index].login.length(), static_cast<size_t>(colLoginWidth - 1)), ' ') + "|";
+    std::string role = (accounts[index].role ? "1 - да" : "0 - нет") + 
+                       std::string(colRoleWidth - 7, ' ') + "|"; // Фиксируем длину 7 символов
+    std::string blocked = (accounts[index].access == ACCESS_BLOCKED ? "1 - да" : "0 - нет") + 
+                          std::string(colAccessWidth - 7, ' ');
+
+    std::string line = num + login + role + blocked;
+    mvprintw(6, 0, line.substr(0, width).c_str());
+
+    mvprintw(height - 2, 0, "Вы действительно хотите удалить запись? (y/n): ");
+    refresh();
+
+    int ch = getch();
+    if (ch == 'y') {
+        accounts.erase(accounts.begin() + index);
+        writeAccounts(accounts);
+        mvprintw(height - 1, 0, "\"Операция выполнена успешно!\"");
     } else {
-        mvprintw(height - 1, 0, "Запись не найдена или это текущий пользователь!");
+        mvprintw(height - 1, 0, "\"Удаление отменено!\"");
     }
     refresh();
     napms(1000);
 }
 
-// Экран управления учётными записями
+
+
+
+
+
 void manageAccountsScreen() {
     int height, width;
     getmaxyx(stdscr, height, width);
-    clear();
-    mvprintw(0, 0, "=== Управление учётными записями ===");
     auto accounts = readAccounts();
-    int y = 2;
-    for (size_t i = 0; i < accounts.size() && y < height - 3; ++i) {
-        std::string line = std::to_string(i + 1) + ". " + accounts[i].login + " (Role: " +
-                          std::to_string(accounts[i].role) + ", Access: " + std::to_string(accounts[i].access) + ")";
-        mvprintw(y++, 0, line.substr(0, width).c_str());
-    }
-    mvprintw(y++, 0, "1. Подтвердить | 2. Заблокировать | 3. Удалить | 4. Редактировать");
-    refresh();
-    int ch = getch();
-    if (ch == '/') return;
-    int choice = ch - '0';
-    std::string indexInput = inputString(y + 1, 0, "Введите номер записи: ");
-    if (indexInput == "/") {
-        mvprintw(height - 1, 0, "\"Операция отменена!\"");
+
+    if (accounts.empty()) {
+        clear();
+        mvprintw(0, 0, "=== Управление учётными записями ===");
+        mvprintw(2, 0, "\"Учётные записи отсутствуют!\"");
+        mvprintw(height - 1, 0, "\"Нажмите любую клавишу для возврата...\"");
         refresh();
-        napms(1000);
+        getch();
         return;
     }
-    int index = std::stoi(indexInput) - 1;
-    if (index >= 0 && index < accounts.size() && accounts[index].login != currentUser->login) {
-        if (choice == 1) accounts[index].access = ACCESS_APPROVED;
-        else if (choice == 2) accounts[index].access = ACCESS_BLOCKED;
-        else if (choice == 3) {
-            mvprintw(y + 2, 0, "\"Вы действительно хотите удалить запись? (y/n): \"");
-            refresh();
-            if (getch() == 'y') accounts.erase(accounts.begin() + index);
+
+    int dataRows = height - 5;
+    int totalPages = (accounts.size() + dataRows - 1) / dataRows;
+    int currentPage = 0;
+
+    while (true) {
+        clear();
+        mvprintw(0, 0, "=== Управление учётными записями ===");
+
+        int startIdx = currentPage * dataRows;
+        int endIdx = std::min(startIdx + dataRows, static_cast<int>(accounts.size()));
+
+        int colNumWidth = 4;
+        int colLoginWidth = 20;
+        int colRoleWidth = 12; // Фиксируем ширину для "Админ"
+        int colAccessWidth = 14;
+        int totalWidth = colNumWidth + colLoginWidth + colRoleWidth + colAccessWidth + 3;
+        if (totalWidth > width) {
+            colLoginWidth = width - (colNumWidth + colRoleWidth + colAccessWidth + 3);
         }
-        else if (choice == 4) {
-            editAccountScreen(index);
-            return;
+
+        std::string header = std::string(colNumWidth - 1, ' ') + "№ |" +
+                            "Логин" + std::string(colLoginWidth - 5, ' ') + "|" +
+                            "Админ" + std::string(colRoleWidth - 5, ' ') + "|" +
+                            "Заблокирован";
+        mvprintw(2, 0, header.substr(0, width).c_str());
+
+        std::string separator(totalWidth, '-');
+        mvprintw(3, 0, separator.c_str());
+
+        int y = 4;
+        for (int i = startIdx; i < endIdx && y < height - 3; ++i) {
+            std::string num = std::to_string(i + 1) + std::string(colNumWidth - std::to_string(i + 1).length() - 1, ' ') + "|";
+            std::string login = accounts[i].login.substr(0, colLoginWidth - 1) + 
+                              std::string(colLoginWidth - std::min(accounts[i].login.length(), static_cast<size_t>(colLoginWidth - 1)), ' ') + "|";
+            // Фиксируем длину строки "Админ" (7 символов: "1 - да " или "0 - нет")
+            std::string role = (accounts[i].role ? "1 - да" : "0 - нет") + 
+                              std::string(colRoleWidth - 7, ' ') + "|";
+            std::string blocked = (accounts[i].access == ACCESS_BLOCKED ? "1 - да" : "0 - нет") + 
+                                  std::string(colAccessWidth - 7, ' ');
+
+            std::string line = num + login + role + blocked;
+            mvprintw(y++, 0, line.substr(0, width).c_str());
         }
-        writeAccounts(accounts);
-        mvprintw(height - 1, 0, "\"Операция выполнена успешно!\"");
-    } else {
-        mvprintw(height - 1, 0, "\"Данные не найдены!\"");
+
+        std::string options = "1. Заблокировать/Разблокировать | 2. Дать/Снять админку | 3. Удалить | 4. Редактировать";
+        mvprintw(height - 2, 0, options.substr(0, width).c_str());
+        
+        std::string navigation = "Стрелки влево/вправо - страницы | Страница " +
+                                std::to_string(currentPage + 1) + " из " + std::to_string(totalPages);
+        mvprintw(height - 1, 0, navigation.substr(0, width).c_str());
+        refresh();
+
+        int ch = getch();
+        if (ch == '/') break;
+        else if (ch == KEY_RIGHT && currentPage < totalPages - 1) {
+            currentPage++;
+        } else if (ch == KEY_LEFT && currentPage > 0) {
+            currentPage--;
+        } else if (ch >= '1' && ch <= '4') {
+            std::string indexInput = inputString(height - 3, 0, "Введите номер записи: ");
+            if (indexInput == "/") {
+                mvprintw(height - 1, 0, "\"Операция отменена!\"");
+                refresh();
+                napms(1000);
+                continue;
+            }
+            if (indexInput.empty()) {
+                mvprintw(height - 1, 0, "\"Ошибка: введите номер записи!\"");
+                refresh();
+                napms(1000);
+                continue;
+            }
+            int index;
+            try {
+                index = std::stoi(indexInput) - 1;
+            } catch (const std::exception& e) {
+                mvprintw(height - 1, 0, "\"Ошибка: введите корректный номер!\"");
+                refresh();
+                napms(1000);
+                continue;
+            }
+            if (index >= 0 && index < accounts.size()) {
+                if (accounts[index].login == currentUser->login) {
+                    clear();
+                    mvprintw(height / 2, 0, "\"Нельзя изменить или удалить текущего пользователя!\"");
+                    mvprintw(height - 1, 0, "\"Нажмите любую клавишу для продолжения...\"");
+                    refresh();
+                    getch();
+                    continue;
+                }
+                switch (ch) {
+                    case '1':
+                        if (accounts[index].access == ACCESS_BLOCKED) {
+                            accounts[index].access = (accounts[index].access == ACCESS_PENDING) ? ACCESS_PENDING : ACCESS_APPROVED;
+                            mvprintw(height - 1, 0, "\"Пользователь разблокирован!\"");
+                        } else {
+                            accounts[index].access = ACCESS_BLOCKED;
+                            mvprintw(height - 1, 0, "\"Пользователь заблокирован!\"");
+                        }
+                        writeAccounts(accounts);
+                        break;
+                    case '2':
+                        accounts[index].role = !accounts[index].role;
+                        writeAccounts(accounts);
+                        mvprintw(height - 1, 0, "\"Операция выполнена успешно!\"");
+                        break;
+                    case '3':
+                        confirmDeleteAccountScreen(index, accounts);
+                        accounts = readAccounts();
+                        totalPages = (accounts.size() + dataRows - 1) / dataRows;
+                        currentPage = std::min(currentPage, totalPages - 1);
+                        if (currentPage < 0) currentPage = 0;
+                        break;
+                    case '4':
+                        editAccountScreen(index);
+                        accounts = readAccounts();
+                        totalPages = (accounts.size() + dataRows - 1) / dataRows;
+                        currentPage = std::min(currentPage, totalPages - 1);
+                        if (currentPage < 0) currentPage = 0;
+                        break;
+                }
+                refresh();
+                napms(1000);
+            } else {
+                mvprintw(height - 1, 0, "\"Данные не найдены!\"");
+                refresh();
+                napms(1000);
+            }
+        }
     }
-    refresh();
-    napms(1000);
 }
 
 
