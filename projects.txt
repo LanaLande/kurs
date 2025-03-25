@@ -1,4 +1,4 @@
-lana;gg;sd dsf fgds;12;200
+q;q;q;232;324
 dima;kopat kortoshky;dimonchik sahsa oleg;44;1200
 oleg;test project;backend dev;30;500
 sasha;new game;level design;25;600
@@ -50,3 +50,5 @@ ilya;embedded development;c firmware;40;1600
 dasha;fashion design;trend analysis;25;770
 kolya;ux/ui redesign;mobile apps;18;490
 7;trtr;tyf;65;67
+sadddddddddddd;ssssssssssssss;sssssssssssssssssss;1;123
+sddd;sd;sd;12222;2.11111e+09
