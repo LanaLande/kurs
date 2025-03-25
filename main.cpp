@@ -854,7 +854,7 @@ void pendingRequestsScreen() {
     clear();
     mvprintw(0, 0, "=== Запросы на подтверждение ===");
     auto accounts = readAccounts();
-    
+
     // Фильтруем пользователей с ACCESS_PENDING
     std::vector<Account> pendingAccounts;
     for (const auto& acc : accounts) {
@@ -871,43 +871,98 @@ void pendingRequestsScreen() {
         return;
     }
 
-    int y = 2;
-    for (size_t i = 0; i < pendingAccounts.size() && y < height - 3; ++i) {
-        std::string line = std::to_string(i + 1) + ". " + pendingAccounts[i].login + " (Ожидает подтверждения)";
-        mvprintw(y++, 0, line.substr(0, width).c_str());
-    }
-    mvprintw(y++, 0, "1. Подтвердить | 2. Заблокировать | 0. Назад");
-    refresh();
+    int dataRows = height - 4; // Количество строк для данных
+    int totalPages = (pendingAccounts.size() + dataRows - 1) / dataRows;
+    int currentPage = 0;
 
-    int choice = getch() - '0';
-    if (choice == 0) return;
+    while (true) {
+        clear();
+        mvprintw(0, 0, "=== Запросы на подтверждение ===");
 
-    int index = inputInt(y + 1, 0, "Введите номер записи: ") - 1;
-    if (index >= 0 && index < pendingAccounts.size()) {
-        // Находим индекс в полном списке аккаунтов
-        int realIndex = -1;
-        for (size_t i = 0; i < accounts.size(); ++i) {
-            if (accounts[i].login == pendingAccounts[index].login) {
-                realIndex = i;
-                break;
+        int startIdx = currentPage * dataRows;
+        int endIdx = std::min(startIdx + dataRows, static_cast<int>(pendingAccounts.size()));
+
+        // Табличный заголовок
+        int colNumWidth = 4;      // "№"
+        int colLoginWidth = 20;   // "Логин"
+        int totalWidth = colNumWidth + colLoginWidth + 1; // 1 разделитель "|"
+        if (totalWidth > width) {
+            colLoginWidth = width - (colNumWidth + 1);
+        }
+
+        std::string header = std::string(colNumWidth - 1, ' ') + "№ |" +
+                            "Логин" + std::string(colLoginWidth - 5, ' ');
+        mvprintw(2, 0, header.substr(0, width).c_str());
+        std::string separator(totalWidth, '-');
+        mvprintw(3, 0, separator.c_str());
+
+        // Вывод данных
+        int y = 4;
+        for (int i = startIdx; i < endIdx && y < height - 2; ++i) {
+            std::string num = std::to_string(i + 1) + std::string(colNumWidth - std::to_string(i + 1).length() - 1, ' ') + "|";
+            std::string login = pendingAccounts[i].login.substr(0, colLoginWidth - 1) + 
+                                std::string(colLoginWidth - std::min(pendingAccounts[i].login.length(), static_cast<size_t>(colLoginWidth - 1)), ' ');
+            std::string line = num + login;
+            mvprintw(y++, 0, line.substr(0, width).c_str());
+        }
+
+        std::string navigation = "Стрелки влево/вправо - страницы | 1. Подтвердить | 2. Заблокировать | 0. Назад | Страница " +
+                                 std::to_string(currentPage + 1) + " из " + std::to_string(totalPages);
+        mvprintw(height - 1, 0, navigation.substr(0, width).c_str());
+        refresh();
+
+        int ch = getch();
+        if (ch == KEY_RIGHT && currentPage < totalPages - 1) {
+            currentPage++;
+        } else if (ch == KEY_LEFT && currentPage > 0) {
+            currentPage--;
+        } else if (ch == '0') {
+            break;
+        } else if (ch == '1' || ch == '2') {
+            int index = inputInt(height - 2, 0, "Введите номер записи: ") - 1;
+            if (index >= 0 && index < pendingAccounts.size()) {
+                int realIndex = -1;
+                for (size_t i = 0; i < accounts.size(); ++i) {
+                    if (accounts[i].login == pendingAccounts[index].login) {
+                        realIndex = i;
+                        break;
+                    }
+                }
+                if (realIndex != -1) {
+                    if (ch == '1') {
+                        accounts[realIndex].access = ACCESS_APPROVED;
+                        mvprintw(height - 1, 0, "Пользователь подтверждён!");
+                    } else if (ch == '2') {
+                        accounts[realIndex].access = ACCESS_BLOCKED;
+                        mvprintw(height - 1, 0, "Пользователь заблокирован!");
+                    }
+                    writeAccounts(accounts);
+                    refresh();
+                    napms(1000);
+                    // Обновляем список ожидающих
+                    pendingAccounts.clear();
+                    for (const auto& acc : accounts) {
+                        if (acc.access == ACCESS_PENDING) {
+                            pendingAccounts.push_back(acc);
+                        }
+                    }
+                    totalPages = (pendingAccounts.size() + dataRows - 1) / dataRows;
+                    currentPage = std::min(currentPage, totalPages - 1);
+                    if (currentPage < 0) currentPage = 0;
+                }
+            } else {
+                mvprintw(height - 1, 0, MSG_NOT_FOUND.c_str());
+                refresh();
+                napms(1000);
             }
         }
-        if (realIndex != -1) {
-            if (choice == 1) {
-                accounts[realIndex].access = ACCESS_APPROVED;
-                mvprintw(height - 1, 0, "Пользователь подтверждён!");
-            } else if (choice == 2) {
-                accounts[realIndex].access = ACCESS_BLOCKED;
-                mvprintw(height - 1, 0, "Пользователь заблокирован!");
-            }
-            writeAccounts(accounts);
-        }
-    } else {
-        mvprintw(height - 1, 0, MSG_NOT_FOUND.c_str());
     }
-    refresh();
-    napms(1000);
 }
+
+
+
+
+
 // Экран главного меню
 void mainMenu() {
     while (true) {
