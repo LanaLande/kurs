@@ -7,6 +7,9 @@
 #include <curses.h>
 #include <openssl/sha.h>
 #include <ctime>
+#include <map>
+#include <set>
+
 
 // Константы
 const std::string ACCOUNTS_FILE = "accounts.txt";
@@ -658,9 +661,6 @@ void deleteProjectScreen() {
 }
 
 
-
-
-
 // Экран поиска проектов
 void searchProjectsScreen() {
     int height, width;
@@ -769,7 +769,7 @@ void searchProjectsScreen() {
             mvprintw(y++, 0, line.substr(0, width).c_str());
         }
 
-        std::string navigation = "\"Стрелки влево/вправо - переключение страниц | / - выход\" | Страница " +
+        std::string navigation = "Стрелки влево/вправо - переключение страниц | Страница " +
                                  std::to_string(currentPage + 1) + " из " + std::to_string(totalPages);
         mvprintw(height - 1, 0, navigation.substr(0, width).c_str());
         refresh();
@@ -1181,8 +1181,97 @@ void pendingRequestsScreen() {
     }
 }
 
+void projectSummaryScreen() {
+    int height, width;
+    getmaxyx(stdscr, height, width); // Получаем размеры экрана
+    auto projects = readProjects();   // Читаем все проекты
 
+    if (projects.empty()) {
+        clear();
+        mvprintw(0, 0, "=== Сводка по проектам ===");
+        mvprintw(2, 0, "Проекты отсутствуют!");
+        mvprintw(height - 1, 0, "Нажмите любую клавишу для возврата...");
+        refresh();
+        getch();
+        return;
+    }
 
+    // Группируем проекты по названию
+    std::map<std::string, std::vector<Project>> projectMap;
+    for (const auto& proj : projects) {
+        projectMap[proj.name].push_back(proj);
+    }
+
+    // Создаем вектор уникальных названий проектов для пагинации
+    std::vector<std::string> projectNames;
+    for (const auto& pair : projectMap) {
+        projectNames.push_back(pair.first);
+    }
+
+    int totalPages = projectNames.size(); // Количество страниц = количество уникальных проектов
+    int currentPage = 0;                  // Текущая страница
+
+    while (true) {
+        clear();
+        mvprintw(0, 0, "=== Сводка по проектам ===");
+
+        // Текущий проект
+        const std::string& projectName = projectNames[currentPage];
+        const std::vector<Project>& projList = projectMap[projectName];
+
+        // Вычисляем итоговую стоимость проекта
+        double totalCost = 0.0;
+        for (const auto& p : projList) {
+            totalCost += p.hours * p.hour_cost;
+        }
+
+        // Выводим информацию о проекте
+        int y = 2;
+        mvprintw(y++, 0, "Проект: %s", projectName.c_str());
+        mvprintw(y++, 0, "Итоговая стоимость: %.2f", totalCost);
+
+        // Группируем записи по виду работ
+        std::map<std::string, std::vector<Project>> workTypeMap;
+        for (const auto& p : projList) {
+            workTypeMap[p.work_type].push_back(p);
+        }
+
+        // Выводим информацию по каждому виду работ
+        for (const auto& workPair : workTypeMap) {
+            const std::string& workType = workPair.first;
+            const std::vector<Project>& workList = workPair.second;
+
+            // Подсчитываем уникальных сотрудников и стоимость вида работ
+            std::set<std::string> employees;
+            double workCost = 0.0;
+            for (const auto& w : workList) {
+                employees.insert(w.employee); // Уникальные сотрудники
+                workCost += w.hours * w.hour_cost; // Стоимость этапа
+            }
+
+            if (y < height - 2) { // Проверяем, помещается ли на экран
+                mvprintw(y++, 0, "  Вид работ: %s", workType.c_str());
+                mvprintw(y++, 0, "    Количество специалистов: %d", employees.size());
+                mvprintw(y++, 0, "    Стоимость: %.2f", workCost);
+            }
+        }
+
+        // Навигация
+        std::string navigation = "Стрелки влево/вправо - переключение | Страница " +
+                                 std::to_string(currentPage + 1) + " из " + std::to_string(totalPages);
+        mvprintw(height - 1, 0, navigation.substr(0, width).c_str());
+        refresh();
+
+        // Обработка ввода
+        int ch = getch();
+        if (ch == '/') break;                    // Выход
+        else if (ch == KEY_RIGHT && currentPage < totalPages - 1) {
+            currentPage++;                       // Следующая страница
+        } else if (ch == KEY_LEFT && currentPage > 0) {
+            currentPage--;                       // Предыдущая страница
+        }
+    }
+}
 
 // Экран главного меню
 void mainMenu() {
@@ -1194,13 +1283,14 @@ void mainMenu() {
         int y = 2;
         mvprintw(y++, 0, "1. Просмотр данных");
         mvprintw(y++, 0, "2. Поиск данных");
+        mvprintw(y++, 0, "3. Сводка по проектам");
         if (currentUser->role == ROLE_ADMIN) {
-            mvprintw(y++, 0, "3. Управление учётными записями");
-            mvprintw(y++, 0, "4. Добавить проект");
-            mvprintw(y++, 0, "5. Редактировать проект");
-            mvprintw(y++, 0, "6. Удалить проект");
-            mvprintw(y++, 0, "7. Регистрация пользователя");
-            mvprintw(y++, 0, "8. Запросы на подтверждение");
+            mvprintw(y++, 0, "4. Управление учётными записями");
+            mvprintw(y++, 0, "5. Добавить проект");
+            mvprintw(y++, 0, "6. Редактировать проект");
+            mvprintw(y++, 0, "7. Удалить проект");
+            mvprintw(y++, 0, "8. Регистрация пользователя");
+            mvprintw(y++, 0, "9. Запросы на подтверждение");
         }
         mvprintw(y++, 0, "/. Выход");
         refresh();
@@ -1211,17 +1301,17 @@ void mainMenu() {
         switch (choice) {
             case 1: viewProjectsScreen(); break;
             case 2: searchProjectsScreen(); break;
-            case 3: if (currentUser->role == ROLE_ADMIN) manageAccountsScreen(); break;
-            case 4: if (currentUser->role == ROLE_ADMIN) addProjectScreen(); break;
-            case 5: if (currentUser->role == ROLE_ADMIN) editProjectScreen(); break;
-            case 6: if (currentUser->role == ROLE_ADMIN) deleteProjectScreen(); break;
-            case 7: if (currentUser->role == ROLE_ADMIN) registerScreen(true); break;
-            case 8: if (currentUser->role == ROLE_ADMIN) pendingRequestsScreen(); break;
+            case 3: projectSummaryScreen(); break;
+            case 4: if (currentUser->role == ROLE_ADMIN) manageAccountsScreen(); break;
+            case 5: if (currentUser->role == ROLE_ADMIN) addProjectScreen(); break;
+            case 6: if (currentUser->role == ROLE_ADMIN) editProjectScreen(); break;
+            case 7: if (currentUser->role == ROLE_ADMIN) deleteProjectScreen(); break;
+            case 8: if (currentUser->role == ROLE_ADMIN) registerScreen(true); break;
+            case 9: if (currentUser->role == ROLE_ADMIN) pendingRequestsScreen(); break;
             default: mvprintw(height - 1, 0, MSG_INVALID_INPUT.c_str()); refresh(); napms(1000);
         }
     }
 }
-
 
 int main() {
     if (!std::ifstream(ACCOUNTS_FILE)) {

@@ -1,54 +1,104 @@
-q;q;q;232;324
-dima;hype;dimonchik sahsa oleg;20;1
-oleg;test project;backend dev;30;500
-sasha;new game;level design;25;600
-masha;app creation;frontend coding;20;450
-dima;kopat kortoshky;dimonchik sahsa oleg;44;1200
-igor;marketing plan;advertising;15;700
-arina;website development;ui design;35;900
-mike;crypto analysis;data research;40;800
-elena;business strategy;financial planning;28;1100
-nikita;database optimization;sql tuning;22;750
-sergey;cybersecurity;penetration testing;27;950
-pavel;machine learning;ai modeling;50;1500
-katya;education platform;content writing;18;400
-sasha;new game;level design;25;600
-dmitry;network setup;server maintenance;33;650
-lana;gg;sd dsf fgds;12;200
-dima;kopat kortoshky;dimonchik sahsa oleg;44;1200
-ivan;ios app;swift development;26;850
-mikhail;android app;kotlin coding;29;700
-alexey;data mining;big data analytics;36;1200
-olga;seo optimization;keyword research;21;550
-vadim;robotics;hardware programming;42;1400
-stas;game testing;quality assurance;38;500
-anna;psychology research;data analysis;31;680
-roman;embedded systems;c++ coding;45;1600
-boris;devops;ci/cd automation;20;1100
-olya;ux research;user testing;24;580
-gena;mobile security;reverse engineering;32;1300
-mark;data visualization;tableau reports;30;870
-nikita;database optimization;sql tuning;22;750
-egor;backend scaling;microservices;28;900
-veronika;product design;wireframing;17;450
-maxim;artificial intelligence;neural networks;50;2000
-elvira;blockchain;smart contracts;44;1800
-vlad;technical writing;documentation;19;550
-ilya;ethical hacking;penetration testing;39;1200
-tanya;medical research;data processing;23;770
-danya;cloud computing;aws setup;48;1500
-ksenia;branding strategy;market positioning;26;680
-vasya;industrial automation;plc programming;43;1400
-gosh;social media marketing;advertising;27;620
-polina;3d modeling;animation;35;1000
-sava;game mechanics;physics simulation;38;850
-andrey;system administration;linux servers;34;980
-evgeniy;stock trading;financial forecasting;29;900
-margo;scriptwriting;storyboarding;22;580
-arkady;space exploration;ai research;50;2500
-ilya;embedded development;c firmware;40;1600
-dasha;fashion design;trend analysis;25;770
-kolya;ux/ui redesign;mobile apps;18;490
-7;trtr;tyf;65;67
-sadddddddddddd;ssssssssssssss;sssssssssssssssssss;1;123
-sddd;sd;sd;12222;2.11111e+09
+ProjectA;Design;Alice;20;50
+ProjectA;Coding;Bob;30;60
+ProjectA;Testing;Charlie;15;40
+ProjectA;Management;David;10;70
+ProjectB;Design;Alice;25;50
+ProjectB;Coding;Eve;35;65
+ProjectB;Testing;Frank;20;45
+ProjectB;Analysis;Grace;15;55
+ProjectC;Coding;David;40;70
+ProjectC;Testing;Eve;10;45
+ProjectC;Design;Helen;30;60
+ProjectC;Support;Ivan;25;50
+ProjectD;Management;Frank;35;75
+ProjectD;Design;Jane;20;40
+ProjectD;Coding;Alice;15;55
+ProjectD;Review;Bob;10;60
+ProjectE;Testing;Charlie;25;45
+ProjectE;Analysis;David;30;65
+ProjectE;Support;Eve;20;50
+ProjectE;Design;Grace;15;70
+ProjectF;Coding;Helen;40;60
+ProjectF;Management;Ivan;10;80
+ProjectF;Testing;Jane;25;45
+ProjectF;Review;Frank;20;55
+ProjectG;Design;Alice;30;50
+ProjectG;Coding;Bob;15;65
+ProjectG;Analysis;Charlie;20;70
+ProjectG;Support;David;25;40
+ProjectH;Testing;Eve;35;55
+ProjectH;Management;Grace;10;75
+ProjectH;Design;Helen;20;60
+ProjectH;Review;Ivan;15;50
+ProjectI;Coding;Jane;30;65
+ProjectI;Testing;Frank;25;45
+ProjectI;Analysis;Alice;20;70
+ProjectI;Support;Bob;10;55
+ProjectJ;Design;Charlie;15;60
+ProjectJ;Management;David;40;50
+ProjectJ;Coding;Eve;20;75
+ProjectJ;Review;Grace;25;40
+ProjectK;Testing;Helen;30;55
+ProjectK;Analysis;Ivan;15;65
+ProjectK;Design;Jane;20;70
+ProjectK;Support;Frank;10;45
+ProjectL;Coding;Alice;25;60
+ProjectL;Management;Bob;35;50
+ProjectL;Testing;Charlie;20;75
+ProjectL;Review;David;15;55
+ProjectM;Design;Eve;30;65
+ProjectM;Analysis;Grace;10;70
+ProjectM;Coding;Helen;25;45
+ProjectM;Support;Ivan;20;60
+ProjectN;Testing;Jane;15;50
+ProjectN;Management;Frank;40;55
+ProjectN;Design;Alice;20;75
+ProjectN;Review;Bob;25;40
+ProjectO;Coding;Charlie;30;65
+ProjectO;Analysis;David;15;70
+ProjectO;Testing;Eve;20;50
+ProjectO;Support;Grace;10;60
+ProjectP;Design;Helen;25;45
+ProjectP;Management;Ivan;35;55
+ProjectP;Coding;Jane;20;70
+ProjectP;Review;Frank;15;65
+ProjectQ;Testing;Alice;30;50
+ProjectQ;Analysis;Bob;10;75
+ProjectQ;Design;Charlie;25;60
+ProjectQ;Support;David;20;40
+ProjectR;Coding;Eve;15;55
+ProjectR;Management;Grace;40;65
+ProjectR;Testing;Helen;20;70
+ProjectR;Review;Ivan;25;45
+ProjectS;Design;Jane;30;50
+ProjectS;Analysis;Frank;15;60
+ProjectS;Coding;Alice;20;75
+ProjectS;Support;Bob;10;55
+ProjectT;Testing;Charlie;25;65
+ProjectT;Management;David;35;40
+ProjectT;Design;Eve;20;70
+ProjectT;Review;Grace;15;50
+ProjectU;Coding;Helen;30;55
+ProjectU;Analysis;Ivan;10;75
+ProjectU;Testing;Jane;25;60
+ProjectU;Support;Frank;20;45
+ProjectV;Design;Alice;15;65
+ProjectV;Management;Bob;40;50
+ProjectV;Coding;Charlie;20;70
+ProjectV;Review;David;25;55
+ProjectW;Testing;Eve;30;40
+ProjectW;Analysis;Grace;15;60
+ProjectW;Design;Helen;20;75
+ProjectW;Support;Ivan;10;65
+ProjectX;Coding;Jane;25;50
+ProjectX;Management;Frank;35;55
+ProjectX;Testing;Alice;20;70
+ProjectX;Review;Bob;15;45
+ProjectY;Design;Charlie;30;60
+ProjectY;Analysis;David;10;75
+ProjectY;Coding;Eve;25;50
+ProjectY;Support;Grace;20;65
+ProjectZ;Testing;Helen;15;55
+ProjectZ;Management;Ivan;40;40
+ProjectZ;Design;Jane;20;70
+ProjectZ;Review;Frank;25;60
