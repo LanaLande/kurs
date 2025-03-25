@@ -943,10 +943,10 @@ void manageAccountsScreen() {
         int startIdx = currentPage * dataRows;
         int endIdx = std::min(startIdx + dataRows, static_cast<int>(accounts.size()));
 
-        int colNumWidth = 4;
-        int colLoginWidth = 20;
-        int colRoleWidth = 12; // Фиксируем ширину для "Админ"
-        int colAccessWidth = 14;
+        int colNumWidth = 4;    // Ширина столбца "№"
+        int colLoginWidth = 20; // Ширина столбца "Логин"
+        int colRoleWidth = 12;  // Ширина столбца "Админ" (должна вмещать "1 - да" или "0 - нет")
+        int colAccessWidth = 14;// Ширина столбца "Заблокирован"
         int totalWidth = colNumWidth + colLoginWidth + colRoleWidth + colAccessWidth + 3;
         if (totalWidth > width) {
             colLoginWidth = width - (colNumWidth + colRoleWidth + colAccessWidth + 3);
@@ -966,10 +966,11 @@ void manageAccountsScreen() {
             std::string num = std::to_string(i + 1) + std::string(colNumWidth - std::to_string(i + 1).length() - 1, ' ') + "|";
             std::string login = accounts[i].login.substr(0, colLoginWidth - 1) + 
                               std::string(colLoginWidth - std::min(accounts[i].login.length(), static_cast<size_t>(colLoginWidth - 1)), ' ') + "|";
-            // Фиксируем длину строки "Админ" (7 символов: "1 - да " или "0 - нет")
-            std::string role = (accounts[i].role ? "1 - да" : "0 - нет") + 
+            // Выравниваем "Админ" (7 символов для "0 - нет" или "1 - да" + пробелы до colRoleWidth)
+            std::string role = (accounts[i].role ? "1 - да " : "0 - нет") + 
                               std::string(colRoleWidth - 7, ' ') + "|";
-            std::string blocked = (accounts[i].access == ACCESS_BLOCKED ? "1 - да" : "0 - нет") + 
+            // Выравниваем "Заблокирован" (7 символов для "0 - нет" или "1 - да" + пробелы до colAccessWidth)
+            std::string blocked = (accounts[i].access == ACCESS_BLOCKED ? "1 - да " : "0 - нет") + 
                                   std::string(colAccessWidth - 7, ' ');
 
             std::string line = num + login + role + blocked;
@@ -1063,7 +1064,6 @@ void manageAccountsScreen() {
         }
     }
 }
-
 
 
 void pendingRequestsScreen() {
