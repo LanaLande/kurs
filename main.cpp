@@ -305,15 +305,42 @@ void registerScreen(bool byAdmin = false) {
         napms(1000);
         return;
     }
+    if (login.empty()) {
+        mvprintw(height - 1, 0, "Логин не может быть пустым!");
+        refresh();
+        napms(1000);
+        return;
+    }
+
+    auto accounts = readAccounts();
+    bool loginExists = false;
+    for (const auto& acc : accounts) {
+        if (acc.login == login) {
+            loginExists = true;
+            break;
+        }
+    }
+    if (loginExists) {
+        mvprintw(height - 1, 0, "Логин уже занят!");
+        refresh();
+        napms(1000);
+        return;
+    }
     
     std::string password = inputString(4, 0, "Пароль: ", true, 20);
+    if (password == "/") {
+        mvprintw(height - 1, 0, "\"Регистрация отменена!\"");
+        refresh();
+        napms(1000);
+        return;
+    }
+
     int role = byAdmin ? ROLE_USER : ROLE_USER;
     int access = byAdmin ? ACCESS_APPROVED : ACCESS_PENDING;
     registerUser(login, password, role, access);
     
-    // Очищаем нижние строки перед выводом
-    mvprintw(height - 2, 0, std::string(width, ' ').c_str()); // Очистка строки
-    mvprintw(height - 1, 0, std::string(width, ' ').c_str()); // Очистка строки
+    mvprintw(height - 2, 0, std::string(width, ' ').c_str());
+    mvprintw(height - 1, 0, std::string(width, ' ').c_str());
     if (!byAdmin) {
         mvprintw(height - 2, 0, "Ваш запрос отправлен администратору на подтверждение.");
     }
@@ -321,7 +348,6 @@ void registerScreen(bool byAdmin = false) {
     refresh();
     getch();
 }
-
 // Экран просмотра проектов
 void viewProjectsScreen() {
     auto projects = readProjects();
