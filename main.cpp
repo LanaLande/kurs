@@ -338,7 +338,7 @@ void viewProjectsScreen() {
         return;
     }
 
-    int dataRows = height - 4;
+    int dataRows = height - 5;
     int totalPages = (projects.size() + dataRows - 1) / dataRows;
     int currentPage = 0;
     int sortColumn = -1;
@@ -375,7 +375,7 @@ void viewProjectsScreen() {
         mvprintw(3, 0, separator.c_str());
 
         int y = 4;
-        for (int i = startIdx; i < endIdx && y < height - 2; ++i) {
+        for (int i = startIdx; i < endIdx && y < height - 1; ++i) {
             std::string num = std::to_string(i + 1) + std::string(colNumWidth - std::to_string(i + 1).length() - 1, ' ') + "|";
             std::string name = projects[i].name.substr(0, colNameWidth - 1) + std::string(colNameWidth - std::min(projects[i].name.length(), static_cast<size_t>(colNameWidth - 1)), ' ') + "|";
             std::string work = projects[i].work_type.substr(0, colWorkWidth - 1) + std::string(colWorkWidth - std::min(projects[i].work_type.length(), static_cast<size_t>(colWorkWidth - 1)), ' ') + "|";
@@ -720,7 +720,7 @@ void searchProjectsScreen() {
         return;
     }
 
-    int dataRows = height - 4;
+    int dataRows = height - 5;
     int totalPages = (filteredProjects.size() + dataRows - 1) / dataRows;
     int currentPage = 0;
 
@@ -755,7 +755,7 @@ void searchProjectsScreen() {
         mvprintw(3, 0, separator.c_str());
 
         int y = 4;
-        for (int i = startIdx; i < endIdx && y < height - 2; ++i) {
+        for (int i = startIdx; i < endIdx && y < height - 1; ++i) {
             std::string num = std::to_string(i + 1) + std::string(colNumWidth - std::to_string(i + 1).length() - 1, ' ') + "|";
             std::string name = filteredProjects[i].name.substr(0, colNameWidth - 1) + std::string(colNameWidth - std::min(filteredProjects[i].name.length(), static_cast<size_t>(colNameWidth - 1)), ' ') + "|";
             std::string work = filteredProjects[i].work_type.substr(0, colWorkWidth - 1) + std::string(colWorkWidth - std::min(filteredProjects[i].work_type.length(), static_cast<size_t>(colWorkWidth - 1)), ' ') + "|";
@@ -932,7 +932,7 @@ void manageAccountsScreen() {
         return;
     }
 
-    int dataRows = height - 5;
+    int dataRows = height - 6;
     int totalPages = (accounts.size() + dataRows - 1) / dataRows;
     int currentPage = 0;
 
@@ -962,7 +962,7 @@ void manageAccountsScreen() {
         mvprintw(3, 0, separator.c_str());
 
         int y = 4;
-        for (int i = startIdx; i < endIdx && y < height - 3; ++i) {
+        for (int i = startIdx; i < endIdx && y < height - 2; ++i) {
             std::string num = std::to_string(i + 1) + std::string(colNumWidth - std::to_string(i + 1).length() - 1, ' ') + "|";
             std::string login = accounts[i].login.substr(0, colLoginWidth - 1) + 
                               std::string(colLoginWidth - std::min(accounts[i].login.length(), static_cast<size_t>(colLoginWidth - 1)), ' ') + "|";
@@ -1088,7 +1088,7 @@ void pendingRequestsScreen() {
         return;
     }
 
-    int dataRows = height - 4;
+    int dataRows = height - 5;
     int totalPages = (pendingAccounts.size() + dataRows - 1) / dataRows;
     int currentPage = 0;
 
@@ -1113,7 +1113,7 @@ void pendingRequestsScreen() {
         mvprintw(3, 0, separator.c_str());
 
         int y = 4;
-        for (int i = startIdx; i < endIdx && y < height - 2; ++i) {
+        for (int i = startIdx; i < endIdx && y < height - 1; ++i) {
             std::string num = std::to_string(i + 1) + std::string(colNumWidth - std::to_string(i + 1).length() - 1, ' ') + "|";
             std::string login = pendingAccounts[i].login.substr(0, colLoginWidth - 1) + 
                                 std::string(colLoginWidth - std::min(pendingAccounts[i].login.length(), static_cast<size_t>(colLoginWidth - 1)), ' ');
