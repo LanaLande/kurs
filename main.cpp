@@ -381,7 +381,7 @@ void viewProjectsScreen() {
         int colNameWidth = 15;
         int colWorkWidth = 15;
         int colEmployeeWidth = 33;
-        int colHoursWidth = 6;
+        int colHoursWidth = 8;
         int colCostWidth = 10;
 
         int totalWidth = colNumWidth + colNameWidth + colWorkWidth + colEmployeeWidth + colHoursWidth + colCostWidth + 5;
@@ -389,11 +389,11 @@ void viewProjectsScreen() {
             colEmployeeWidth = width - (colNumWidth + colNameWidth + colWorkWidth + colHoursWidth + colCostWidth + 5);
         }
 
-        std::string header = std::string(colNumWidth - 1, ' ') + "№ |" +
+        std::string header = std::string(1, ' ') + "№ |" +
                             "1 Название" + std::string(colNameWidth - 10, ' ') + "|" +
                             "2 Работа" + std::string(colWorkWidth - 8, ' ') + "|" +
                             "3 Сотрудник" + std::string(colEmployeeWidth - 11, ' ') + "|" +
-                            "4 Часы" + std::string(colHoursWidth - 6, ' ') + "|" +
+                            "4 Часы" + std::string(colHoursWidth - 7, ' ') + "|" +
                             "5 Стоимость";
         mvprintw(2, 0, header.substr(0, width).c_str());
 
@@ -538,7 +538,7 @@ void editProjectScreen() {
         int colNameWidth = 15;
         int colWorkWidth = 15;
         int colEmployeeWidth = 33;
-        int colHoursWidth = 6;
+        int colHoursWidth = 8;
         int colCostWidth = 10;
 
         int totalWidth = colNumWidth + colNameWidth + colWorkWidth + colEmployeeWidth + colHoursWidth + colCostWidth + 5;
@@ -546,11 +546,11 @@ void editProjectScreen() {
             colEmployeeWidth = width - (colNumWidth + colNameWidth + colWorkWidth + colHoursWidth + colCostWidth + 5);
         }
 
-        std::string header = std::string(colNumWidth - 1, ' ') + "№ |" +
+        std::string header =  std::string(1, ' ') + "№ |" +
                             "Название" + std::string(colNameWidth - 8, ' ') + "|" +
                             "Работа" + std::string(colWorkWidth - 6, ' ') + "|" +
                             "Сотрудник" + std::string(colEmployeeWidth - 9, ' ') + "|" +
-                            "Часы" + std::string(colHoursWidth - 4, ' ') + "|" +
+                            "Часы" + std::string(colHoursWidth - 5, ' ') + "|" +
                             "Стоимость";
         mvprintw(4, 0, header.substr(0, width).c_str());
 
@@ -761,7 +761,7 @@ void searchProjectsScreen() {
         int colNameWidth = 15;
         int colWorkWidth = 15;
         int colEmployeeWidth = 33;
-        int colHoursWidth = 6;
+        int colHoursWidth = 8;
         int colCostWidth = 10;
 
         int totalWidth = colNumWidth + colNameWidth + colWorkWidth + colEmployeeWidth + colHoursWidth + colCostWidth + 5;
@@ -769,12 +769,12 @@ void searchProjectsScreen() {
             colEmployeeWidth = width - (colNumWidth + colNameWidth + colWorkWidth + colHoursWidth + colCostWidth + 5);
         }
 
-        std::string header = std::string(colNumWidth - 1, ' ') + "№ |" +
-                            std::string("Название").substr(0, colNameWidth - 1) + std::string(colNameWidth - 8, ' ') + "|" +
-                            std::string("Работа").substr(0, colWorkWidth - 1) + std::string(colWorkWidth - 7, ' ') + "|" +
-                            std::string("Сотрудник").substr(0, colEmployeeWidth - 1) + std::string(colEmployeeWidth - 10, ' ') + "|" +
-                            "Часы |" +
-                            "Стоимость";
+        std::string header = std::string(1, ' ') + "№ |" +
+                            "1 Название" + std::string(colNameWidth - 10, ' ') + "|" +
+                            "2 Работа" + std::string(colWorkWidth - 8, ' ') + "|" +
+                            "3 Сотрудник" + std::string(colEmployeeWidth - 11, ' ') + "|" +
+                            "4 Часы" + std::string(colHoursWidth - 7, ' ') + "|" +
+                            "5 Стоимость";
         mvprintw(2, 0, header.substr(0, width).c_str());
 
         std::string separator(totalWidth, '-');
@@ -978,7 +978,7 @@ void manageAccountsScreen() {
             colLoginWidth = width - (colNumWidth + colRoleWidth + colAccessWidth + 3);
         }
 
-        std::string header = std::string(colNumWidth - 1, ' ') + "№ |" +
+        std::string header = std::string(1, ' ') + "№ |" +
                             "Логин" + std::string(colLoginWidth - 5, ' ') + "|" +
                             "Админ" + std::string(colRoleWidth - 5, ' ') + "|" +
                             "Заблокирован";
@@ -1132,7 +1132,7 @@ void pendingRequestsScreen() {
             colLoginWidth = width - (colNumWidth + 1);
         }
 
-        std::string header = std::string(colNumWidth - 1, ' ') + "№ |" +
+        std::string header = std::string(1, ' ') + "№ |" +
                             "Логин" + std::string(colLoginWidth - 5, ' ');
         mvprintw(2, 0, header.substr(0, width).c_str());
         std::string separator(totalWidth, '-');
