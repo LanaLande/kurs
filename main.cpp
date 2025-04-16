@@ -903,7 +903,7 @@ void confirmDeleteAccountScreen(int index, std::vector<Account>& accounts) {
         colLoginWidth = width - (colNumWidth + colRoleWidth + colAccessWidth + 3);
     }
 
-    std::string header = std::string(colNumWidth - 1, ' ') + "№ |" +
+    std::string header = std::string(1, ' ') + "№ |" +
                         "Логин" + std::string(colLoginWidth - 5, ' ') + "|" +
                         "Админ" + std::string(colRoleWidth - 5, ' ') + "|" +
                         "Заблокирован";
@@ -958,7 +958,7 @@ void manageAccountsScreen() {
         return;
     }
 
-    int dataRows = height - 6;
+    int dataRows = height - 7;
     int totalPages = (accounts.size() + dataRows - 1) / dataRows;
     int currentPage = 0;
 
@@ -988,7 +988,7 @@ void manageAccountsScreen() {
         mvprintw(3, 0, separator.c_str());
 
         int y = 4;
-        for (int i = startIdx; i < endIdx && y < height - 2; ++i) {
+        for (int i = startIdx; i < endIdx && y < height - 1; ++i) {
             std::string num = std::to_string(i + 1) + std::string(colNumWidth - std::to_string(i + 1).length() - 1, ' ') + "|";
             std::string login = accounts[i].login.substr(0, colLoginWidth - 1) + 
                               std::string(colLoginWidth - std::min(accounts[i].login.length(), static_cast<size_t>(colLoginWidth - 1)), ' ') + "|";
@@ -1114,7 +1114,7 @@ void pendingRequestsScreen() {
         return;
     }
 
-    int dataRows = height - 5;
+    int dataRows = height - 6;
     int totalPages = (pendingAccounts.size() + dataRows - 1) / dataRows;
     int currentPage = 0;
 
@@ -1139,7 +1139,7 @@ void pendingRequestsScreen() {
         mvprintw(3, 0, separator.c_str());
 
         int y = 4;
-        for (int i = startIdx; i < endIdx && y < height - 1; ++i) {
+        for (int i = startIdx; i < endIdx && y < height; ++i) {
             std::string num = std::to_string(i + 1) + std::string(colNumWidth - std::to_string(i + 1).length() - 1, ' ') + "|";
             std::string login = pendingAccounts[i].login.substr(0, colLoginWidth - 1) + 
                                 std::string(colLoginWidth - std::min(pendingAccounts[i].login.length(), static_cast<size_t>(colLoginWidth - 1)), ' ');
@@ -1161,7 +1161,7 @@ void pendingRequestsScreen() {
         } else if (ch == '1' || ch == '2') {
             std::string indexInput = inputString(height - 2, 0, "Введите номер записи: ");
             if (indexInput == "/") {
-                mvprintw(height - 1, 0, "\"Операция отменена!\"");
+                mvprintw(height - 2, 0, "Операция отменена!                                 ");
                 refresh();
                 napms(1000);
                 continue;
@@ -1178,10 +1178,10 @@ void pendingRequestsScreen() {
                 if (realIndex != -1) {
                     if (ch == '1') {
                         accounts[realIndex].access = ACCESS_APPROVED;
-                        mvprintw(height - 1, 0, "\"Пользователь подтверждён!\"");
+                        mvprintw(height - 2, 0, "\"Пользователь подтверждён!");
                     } else if (ch == '2') {
                         accounts[realIndex].access = ACCESS_BLOCKED;
-                        mvprintw(height - 1, 0, "\"Пользователь заблокирован!\"");
+                        mvprintw(height - 2, 0, "Пользователь заблокирован!");
                     }
                     writeAccounts(accounts);
                     refresh();
